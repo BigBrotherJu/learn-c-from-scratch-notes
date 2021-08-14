@@ -1,6 +1,6 @@
 # 全书总结
 
-## gcc 使用
+## GCC 使用
 
 - `a.out`（Assembler Output）
 - `-o` 参数
@@ -47,3 +47,11 @@
   3.14 是 `double` 类型的。
 
 - 枚举常量
+
+## 字符（Character）
+
+
+
+- 字符串字面值（String Literal)
+
+-

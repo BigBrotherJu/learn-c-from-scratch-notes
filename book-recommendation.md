@@ -21,3 +21,7 @@
 - The Linux User's Guide Beta 1st
 
   据 Larry Greenfield 说，「Linus 的早期工程之一是编写一个交替打印 AAAA 和 BBBB 的程序，这玩意儿后来进化成了 Linux。」（引自 The Linux User's Guide Beta1 版）。
+
+- The Art of UNIX Programming. Eric Raymond.
+
+  总的来说，C语言的设计是非常优美的，只要理解了少数基本概念和基本原则就可以根据组合规则写出任意复杂的程序，很少有例外的规定说这样组合是不允许的，或者那样类推是错误的。相反，C++的设计就非常复杂，充满了例外，全世界没几个人能把C++的所有规则都牢记于心，因而C++的设计一直饱受争议，这个观点在参考文献[7]中有详细阐述。

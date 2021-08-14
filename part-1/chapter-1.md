@@ -82,7 +82,7 @@
 
 ### Syntax
 
-- Syntax: Tokens and Structures, Lexical Rules and Grammar Rules
+- Syntax: Tokens and structures, lexical rules and grammar rules
 
   形式语言有严格的语法（Syntax）规则，例如，3+3=6是一个语法正确的数学等式，而3=+6$则不是，H<sub>2</sub>O是一个正确的分子式，而<sub>2</sub>Zz则不是。
 
@@ -96,11 +96,11 @@
 
   结构是指Token的排列方式，3=+6$还有一个结构上的错误，虽然加号和等号都是合法的运算符，但是不能在等号之后紧跟加号，而<sub>2</sub>Zz的另一个问题在于分子式中必须把下标写在化学元素名称之后而不是前面。
 
-- Lexical Rules and Grammar Rules
+- Lexical rules and grammar rules
 
   关于Token的规则称为词法（Lexical）规则，而关于结构的规则称为语法（Grammar）规则。
 
-- 区别 Syntax 和 Grammar
+- 区别 syntax 和 grammar
 
   很不幸，Syntax和Grammar通常都翻译成“语法”，这让初学者非常混乱。
 
@@ -138,7 +138,7 @@
 
 有时候调试是一项非常复杂的工作，要求程序员概念明确、逻辑清晰、性格沉稳，还需要一点运气。
 
-### Bug 的分类
+### bug 的分类
 
 调试的技能我们在后续的学习中慢慢培养，但首先我们要清楚程序中的Bug分为哪几类。
 
@@ -208,7 +208,7 @@
 
 在Windows平台上编译运行C程序也可以使用MinGW（GNU开发工具的Windows版本）、Cygwin（在Windows系统中模拟的Linux环境）或者Intel的编译器，本书不做详细介绍。
 
-### 初步接触 gcc
+### 初步接触 GCC
 
 通常一本教编程的书中第一个例子都是打印“Hello, World.”，这个传统源自参考文献[3]，用C语言写这个程序可以这样写：
 
@@ -252,8 +252,6 @@ Hello, world.
 
 虽然这只是一个很小的程序，但我们目前暂时还不具备相关的知识来完全理解这个程序，比如程序的第一行，还有程序主体的int main(void){...return 0;}结构，这些部分我们暂时不详细解释，读者现在只需要把它们看成是每个程序按惯例必须要写的部分（Boilerplate）。
 
-但要注意main是一个特殊的名字，C程序总是从main里面的第一条语句开始执行的。
-
 注意语句的末尾以;号（Semicolon）结束，下一条语句return 0;也是如此。
 
 C语言用{}括号（Brace或Curly Brace）把语法结构分成组，在上面的程序中printf和return语句套在main的{}括号中，表示它们属于main的定义之中。
@@ -289,7 +287,7 @@ C语言用{}括号（Brace或Curly Brace）把语法结构分成组，在上面�
 
   各种警告信息的严重程度不同，像上面这种警告几乎一定表明程序中有Bug，而另外一些警告只表明程序写得不够规范，一般还是能正确运行的，有些不重要的警告信息gcc默认是不提示的，但这些警告信息也有可能表明程序中有Bug。
 
-- gcc -Wall 选项
+- GCC -Wall 选项
 
   一个好的习惯是打开gcc的-Wall选项，让gcc提示所有的警告信息，不管是严重的还是不严重的，然后把这些问题从代码中全部消灭。
 
