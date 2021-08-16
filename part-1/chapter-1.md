@@ -254,8 +254,6 @@ Hello, world.
 
 注意语句的末尾以;号（Semicolon）结束，下一条语句return 0;也是如此。
 
-C语言用{}括号（Brace或Curly Brace）把语法结构分成组，在上面的程序中printf和return语句套在main的{}括号中，表示它们属于main的定义之中。
-
 ### Errors and Warnings
 
 - Errors
