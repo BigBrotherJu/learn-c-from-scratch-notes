@@ -252,8 +252,6 @@ Hello, world.
 
 虽然这只是一个很小的程序，但我们目前暂时还不具备相关的知识来完全理解这个程序，比如程序的第一行，还有程序主体的int main(void){...return 0;}结构，这些部分我们暂时不详细解释，读者现在只需要把它们看成是每个程序按惯例必须要写的部分（Boilerplate）。
 
-注意语句的末尾以;号（Semicolon）结束，下一条语句return 0;也是如此。
-
 ### Errors and Warnings
 
 - Errors
