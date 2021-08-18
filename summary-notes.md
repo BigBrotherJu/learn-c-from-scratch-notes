@@ -26,6 +26,8 @@
 - [Epoch](part-1/chapter-8.md#8.3-数组应用实例：直方图)
 - [Row-Major and Column-Major](part-1/chapter-8.md#初始化二维数组)
 - [数据驱动的编程](part-1/chapter-8.md#数据驱动的编程)
+- [代码是写给人看的](part-1/chapter-9.md#9.-编码风格)
+- [UNIX 标准字符终端长宽](part-1/chapter-9.md#9.-编码风格)
 
 ## 源代码组成
 
