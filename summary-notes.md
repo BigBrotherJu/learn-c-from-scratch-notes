@@ -28,9 +28,11 @@
 - [数据驱动的编程](part-1/chapter-8.md#数据驱动的编程)
 - [代码是写给人看的](part-1/chapter-9.md#9.-编码风格)
 - [UNIX 标准字符终端长宽](part-1/chapter-9.md#9.-编码风格)
-- [Loop Invariant](part-1/chapter-10.md#11.2-插入排序)
-- [Design by Contract](part-1/chapter-10.md#11.6-折半查找)
-- [断言](part-1/chapter-10.md#11.6-折半查找)
+- [Loop Invariant](part-1/chapter-11.md#11.2-插入排序)
+- [Design by Contract](part-1/chapter-11.md#11.6-折半查找)
+- [断言](part-1/chapter-11.md#11.6-折半查找)
+- [算法 + 数据结构 = 程序](part-1/chapter-12.md#12.1-数据结构的概念)
+- [Class Invariant](part-1/chapter-12.md#12.2-堆栈)
 
 ## 源代码组成
 
