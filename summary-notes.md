@@ -93,6 +93,14 @@
 
   - 表达式
 
+    - [类型](#类型（Type）)
+
+      > 任何表达式都有**值**和**类型**两个基本属性。
+
+    复合表达式由运算符和操作数组成。
+
+    基础表达式包括常量。
+
     - 运算符
 
       [运算符注意事项](#运算符注意事项)
@@ -103,7 +111,7 @@
 
       - 单目运算符 右结合
 
-        逻辑非运算符 ! 正号运算符 + 负号运算符 - 前缀自增运算符 ++ 前缀自减运算符 --
+        逻辑非运算符 ! 正号运算符 + 负号运算符 - 前缀自增运算符 ++ 前缀自减运算符 -- 类型转换运算符 (类型名)
 
       - 乘除运算符 左结合
 
@@ -133,9 +141,7 @@
 
         =
 
-    - [类型](#类型（Type）)
-
-      > 任何表达式都有**值**和**类型**两个基本属性。
+    - [常量](#常量)
 
 - 改变控制流程的语句
 
@@ -183,7 +189,216 @@
 
 - return 语句
 
+#### 类型（Type）
+
+- 类型种类
+- 类型大小
+- 类型转换
+
+---
+
+- 类型种类
+
+  - 标量（Scalar）类型
+
+    可以表示零和非零，可以参与逻辑与、或、非运算或者做控制表达式的类型称为标量类型（Scalar Type）。
+
+    - 算术（Arithmetic）类型
+
+      可以做算术运算的类型称为算术类型（Arithmetic Type）。
+
+      - 整数（Integer）类型
+
+        整数类型的符号在下面讨论。
+
+        - 布尔类型
+
+          如果一个表达式要产生一个代表真假的值，那就两种情况，1 代表真，0 代表假。
+
+          如果某条语句要检查一个表达式是真是假，非 0 代表真，0 代表假。
+
+        - `char`，`signed char`，`unsigned char`，字符（Character）类型
+
+        - `short int`/`short`/`signed short int`/`signed short`，`unsigned short int`/`unsigned short`
+
+        - `int`/`signed int`/`signed`，`unsigned int`/`unsigned`，整数（Integer）类型
+
+        - `long int`/`long`/`signed long int`/`signed long`，`unsigned long int`/`unsigned long`
+
+        - `long long int`/`long long`/`signed long long int`/`signed long long`，`unsigned long long int`/`unsigned long long`
+
+        - `enum tag` 枚举（Enumeration）类型
+
+        - bit-field
+
+      - 浮点数（Floating Point）类型
+
+        - 单精度浮点数类型
+
+          `float`
+
+        - 双精度浮点数类型
+
+          `double`
+
+        - 精度更高的浮点数类型
+
+          `long double`
+
+    - 指针类型
+
+  - 函数类型（Function Type）
+
+  - void 类型
+
+- unsigned and signed
+
+  - 有符号数的表示方式
+
+    对于有符号数在计算机中的表示是 Sign and Magnitude、1's Complement 还是 2's Complement，C 标准也没有明确规定，也是 Implementation Defined。
+
+    大多数体系结构都采用 2's Complement 表示法，x86 平台也是如此。
+
+  - char
+
+    不带 signed 或 unsigned 关键字的 char 型是无符号数还是有符号数是 implementation defined。
+
+    x86 平台的 gcc 定义 char 型是有符号的。
+
+  - 除了 char 以外的类型
+
+    除了 char 型以外的这些类型如果不明确写 signed 或 unsigned 关键字都表示 signed，这一点是 C 标准明确规定的，不是 Implementation Defined。
+
+---
+
+- 类型大小
+
+  - 整数类型
+
+    - char
+
+      C 语言中 char 型占一个字节的存储空间，一个字节通常是 8 个 bit。
+
+    - 除了 char 以外的其他整型大小
+
+      除了 char 型在 C 标准中明确规定占一个字节之外，其他整型占几个字节都是 Implementation Defined。
+
+      通常的编译器实现遵守 ILP32 或 LP64 规范。
+
+      | 类型 | ILP32（位数） | LP64（位数） |
+      | --------- | -- | -- |
+      | char      | 8  | 8  |
+      | short     | 16 | 16 |
+      | int       | 32 | 32 |
+      | long      | 32 | 64 |
+      | long long | 64 | 64 |
+      | 指针 | 32 | 64 |
+
+  - 浮点数类型
+
+    C 标准既没有规定每种类型占多少字节，也没有规定采用哪种表示形式。
+
+    - float 和 double
+
+      大部分平台的浮点数实现遵循 IEEE 754，float 型通常是 32 位，double 型通常是 64 位。
+
+    - long double
+
+      long double 型通常是比 double 型精度更高的类型，但各平台的实现有较大差异。
+
+      在 x86 平台上，大多数编译器实现的 long double 型是 80 位，因为 x86 的浮点运算单元具有 80 位精度，gcc 实现的 long double 型是 12 字节（96 位），这是为了对齐到 4 字节边界。
+
+---
+
+- 类型转换
+
+  - 两种类型转换
+
+    - 隐式类型转换（Implicit Conversion/Coercion）
+
+      隐式类型转换见下。
+
+    - 显式类型转换（Explicit Conversion)/强制类型转换（Type Cast）
+
+      用类型转换运算符就可以进行显示类型转换。
+
+  - 类型转换具体如何进行
+
+    见第 14 章中[编译器如何处理类型转换](part-2/chapter-14.md#编译器如何处理类型转换)
+
+- 隐式类型转换
+
+  - 等号两边类型不同
+
+    如果赋值或初始化时等号两边的类型不相同，则编译器会把等号右边的类型转换成等号左边的类型再做赋值。例如int c=3.14;，编译器会把右边的double型转成int型再赋给变量c。
+
+  - 函数
+
+    - 函数实参和形参类型不一样
+
+      函数调用传参的过程相当于定义形参并且用实参对其做初始化。所以由赋值或初始化产生的类型转换也适用于这种情况。
+
+      例如一个函数的原型是int foo(int, int);，则调用foo(3.1, 4.2)时会自动把两个double型的实参转成int型赋给形参。
+
+    - return 后面的表达式类型和函数返回类型不一样
+
+      函数返回的过程相当于定义一个临时变量并且用return的表达式对其做初始化，所以由赋值或初始化产生的类型转换也适用于这种情况。
+
+      如果这个函数定义中有返回语句return 1.2;，则返回值1.2会自动转成int型再返回。
+
+    - 函数形参类型未知或使用了可变参数：Default Argument Promotion
+
+      如果一个函数的形参类型未知，例如使用了Old Style C风格的函数声明（详见第3.2节），或者函数的参数列表中有...，那么：
+
+      实参类型是 char、short、bit-field（不管有无符号），调用函数时要将实参提升为 int 或 unsigned int（如果实参类型取值范围用 int 表示不了）。这叫 Integer Promotion。
+
+      比如 printf 的参数列表中有...，除了第一个形参之外，其他形参的类型都是未知的。有这样的代码 `char ch = 'A'; printf("%c", ch);`，ch 要被提升为 int 型之后再传给 printf。
+
+      实参类型是 float ，调用函数时要将实参提升为 double 型。
+
+      这条规则称为 Default Argument Promotion。
+
+  - \+ - * / % > < >= <= == != 两边类型不同：Usual Arithmetic Conversion
+
+    两个算术类型的操作数做算术运算，比如a+b，如果两边操作数的类型不同，编译器会自动做类型转换，使两边类型相同之后才做运算，这称为Usual Arithmetic Conversion。
+
+    到目前为止我们学过的+ - * / % ><>= <= == !=运算符都需要做Usual Arithmetic Conversion，因为都要求两边操作数的类型一致。
+
+    转换规则如下：
+
+    - 如果有一边的类型是long double，则把另一边也转成long double。
+
+    - 否则，如果有一边的类型是double，则把另一边也转成double。
+
+    - 否则，如果有一边的类型是float，则把另一边也转成float。
+
+    - 否则，两边应该都是整型。
+
+      首先，操作数如果是 char、short、bit-field（不管有无符号），要将操作数提升为 int 或 unsigned int（如果操作数类型取值范围用 int 表示不了），然后才能参与计算。这叫Integer Promotion。
+
+      例如，`unsigned char c1 = 255, c2 = 2; int n = c1 + c2;`，计算表达式c1＋c2的过程其实是先把c1和c2提升为int型然后再相加（unsigned char的取值范围是0～255，完全可以用int表示，所以提升为int就可以了，不需要提升为unsigned int），整个表达式的值也是int型，最后的结果是257。假如没有这个提升的过程，c1+c2就溢出了，溢出会得到什么结果是Undefined，在大多数平台上会把进位截掉，得到的结果应该是1。
+
+      然后如果类型仍不相同，则需要继续转换。我们规定char、short、int、long、long long的转换级别（Integer Conversion Rank）一个比一个高，同一类型的有符号和无符号数具有相同的Rank。转换规则如下：
+
+      - 如果两边都是有符号数，或者都是无符号数，那么较低Rank的类型转换成较高Rank的类型。例如unsigned int和unsigned long做算术运算时都转成unsigned long。
+
+      - 否则，如果一边是无符号数另一边是有符号数，无符号数的Rank不低于有符号数的Rank，则把有符号数转成另一边的无符号类型。例如unsigned long和int做算术运算时都转成unsigned long，unsigned long和long做算术运算时也都转成unsigned long。
+
+      - 剩下的情况是：一边有符号另一边无符号，并且无符号数的Rank低于有符号数的Rank。这时又分为两种情况，如果这个有符号数类型能够覆盖这个无符号数类型的取值范围，则把无符号数转成另一边的有符号类型。例如遵循LP64的平台上unsigned int和long在做算术运算时都转成long。
+
+      - 否则，也就是这个有符号数类型不足以覆盖这个无符号数类型的取值范围，则把两边都转成有符号数的Rank对应的无符号类型。例如在遵循ILP32的平台上unsigned int和long在做算术运算时都转成unsigned long。
+
+  - 单目运算符 + - ~、移位运算符 << >>
+
+    单目运算符+ - ~只有一个操作数，移位运算符<<>>两边的操作数类型不要求一致，这些运算不需要做Usual Arithmetic Conversion，但也需要做Integer Promotion。
+
+  - && || ???
+
 #### 运算符注意事项
+
+- 类型转换运算符
+
+  操作数的类型必须是标量类型，转换之后的类型必须是标量类型或者void型。
 
 - 除法运算符操作数为两个整数时的结果
 
@@ -209,49 +424,46 @@
 
   由 . 后缀运算符组成的表达式能不能做左值取决于 . 后缀运算符左边的操作数能不能做左值。
 
-#### 类型（Type）
+#### 常量
 
-- 类型种类
+- 整数常量
 
-  - 标量（Scalar）类型
+  - 整数常量
 
-    - 算术（Arithmetic）类型
+    整数常量进制：可以写成十进制、0 加八进制、0x/0X 加十六进制。二进制不在标准中，不建议使用。
 
-      - 整数（Integer）类型
+    末尾字母：可以加 u/U、l/L、ll/LL。
 
-        - `int`，整数（Integer）类型
+    判断一个整数常量类型的方法：先根据这个常量末尾的字母在下表（出自参考文献[8]的6.4.4.1节条款5）中找到单元格，然后从上到下在单元格列出的类型中找到第一个足够大的类型，这个类型就是常量的类型。
 
-          - 布尔类型
+    ![整数常量的类型](part-2/images/整数常量的类型.png)
 
-            如果一个表达式要产生一个代表真假的值，那就两种情况，1 代表真，0 代表假。
+  - int 型
 
-            如果某条语句要检查一个表达式是真是假，非 0 代表真，0 代表假。
+    - 字符常量
+    - 枚举常量
 
-        - `char`，字符（Character）类型
+- 浮点数常量
 
-        - `enum tag` 枚举（Enumeration）类型
+  浮点数常量写法：
 
-      - 浮点数（Floating Point）类型
+  - x1e/Ex2（基数为 2）
 
-        - 单精度浮点数类型
+    C99 引入一种新的十六进制浮点数表示，基数是 2。
 
-          `float`
+  - x1e/Ex2（基数为 10）
 
-        - 双精度浮点数类型
+    x1 是尾数，x2是指数，用 e/E 隔开，基数是 10。
 
-          `double`
+    x1 可以是整数可以是小数，小数的小数点左边或右边可以没数字。
 
-        - 精度更高的浮点数类型
+    可以只写 x1，这时 x1 不能是整数；也可以只写 e/Ex2。
 
-          `long double`
+  浮点数常量类型判断：
 
-    - 指针类型
+  浮点数的后缀和类型之间的对应关系比较简单，没有后缀的浮点数常量是 double 型的，有后缀 f 或 F 的浮点数常量是 float 型的，有后缀 l 或 L 的浮点数常量是 long double 型的。
 
-  - 函数类型（Function Type）
-
-- 类型大小
-
-  > 在C语言中char型变量占一个字节，其他类型的变量占多少字节在不同平台上有不同的规定。
+  例如 3.14 是 double 类型的。
 
 #### switch 语句
 
@@ -354,16 +566,6 @@
 ## Bash
 
 `$?`
-
-## 常量（Constant）
-
-- 字符常量
-- 整数常量
-- 浮点数常量
-
-  3.14 是 `double` 类型的。
-
-- 枚举常量
 
 ## 转义序列
 
