@@ -34,6 +34,7 @@
 - [算法 + 数据结构 = 程序](part-1/chapter-12.md#12.1-数据结构的概念)
 - [Class Invariant](part-1/chapter-12.md#12.2-堆栈)
 - [Implementation-Defined, Unspecified, and Undefined](part-2/chapter-14.md#Implementation-Defined,-Unspecified,-and-Undefined)
+- [Magic Number](part-2/chapter-17.md#目标文件)
 
 ## 源代码组成
 
@@ -60,6 +61,9 @@
 - 预处理指令
 
   - `#include`
+
+    #include 包含的头文件通常位于 /usr/include 目录。
+
   - `#define`
 
 ### 函数体内
@@ -640,25 +644,27 @@
 
 选项-std=c99。
 
-### 从源代码到可执行文件的整个过程
+### 直接中源代码到可执行文件
+
+- 默认的可执行文件名 `a.out`
+
+  `a.out` 是 Assembler Output 的缩写。
+
+- 改变可执行文件名
+
+  `$ gcc main.c -o main`
+
+### 从源代码到进程的整个过程
 
 一个 C 源代码文件要先被编译器翻译成汇编程序，再被汇编器翻译成机器指令，最后还要经过链接器的处理才能成为可执行文件。
 
 编译器的工作分为两个阶段，先是预处理（Preprocess）阶段，然后才是编译阶段。
 
-- 预处理阶段
+- 预处理阶段：C 代码到预处理后的 C 代码
 
-  预处理器将源代码中的预处理指令进行预处理。
+  - 预处理命令
 
-  - #include
-
-    - 包含的头文件位置
-
-      头文件通常位于/usr/include目录。
-
-  - 处理之后的源代码
-
-    可以用这两种方式查看预处理之后的源代码；
+    可以用这两种方式对 C 代码进行预处理，得到预处理后的 C 代码：
 
     - `$gcc -E main.c`
 
@@ -666,13 +672,107 @@
 
       cpp 是 C preprocessor 的意思。
 
-- 编译阶段
+  - 预处理器的工作
+
+    预处理器将源代码中的预处理指令进行预处理，得到预处理后的 C 代码。
+
+- 编译阶段：预处理后的 C 代码到汇编代码
 
   - 让 GCC 提示所有警告信息
 
     在使用 GCC 编译的时候加上 `-Wall` 选项。
 
-- 链接阶段
+- 汇编阶段：汇编代码到可重定位的目标文件
+
+  - 汇编命令
+
+    汇编器 as 将汇编代码 hello.s 生成可重定位的目标文件 hello.o：
+
+    ``` console
+    as hello.s -o hello.o
+    ```
+
+  - 汇编器的工作
+
+    汇编器对汇编代码进行以下操作，得到可重定位的目标文件：
+
+    - 汇编器将汇编代码中的助记符翻译成机器指令。
+
+    - 汇编器将汇编代码中所有的符号替换成对应的地址，放入可重定位的目标文件。
+
+    - 汇编器将汇编代码中的 section 搬入可重定位的目标文件，另外还会往可重定位的目标文件中添加另外一些 section（比如符号表）。
+
+- 可重定位的目标文件
+
+  目标文件由若干个Section组成，我们在汇编程序中声明的.section会成为目标文件中的Section，此外汇编器还会自动添加一些Section（比如符号表）。
+
+  可重定位的目标文件可以通过 `readelf -a hello.o` 命令查看其中的信息。显示的信息有：
+
+  - 可重定位的目标文件的 ELF header
+
+    - `Entry point address`
+
+      程序的入口地址是0x0，因为目标文件的入口地址还没确定，链接成可执行文件时才能确定入口地址。
+
+    - Program headers
+
+      `Start of program headers`、`Size of program headers`、`Number of program headers` 都是 0。
+
+      因为目标文件没有Program Header Table，链接成可执行文件时才会有Program Header Table；
+
+    - Section headers
+
+      `Start of section headers` 表示 section header table 中第一个 section header 的起始地址。
+
+      `Size of section headers` 表示 section header table 中每一个 section header 占用的大小。
+
+      `Number of section headers` 表示 section header table 中 section header 的数量。
+
+      `Section header string table index` 表示 section header string table （它也是一个 section）在 section header table 中的位置。这个 section 是汇编器自己加的。
+
+  - 可重定位的目标文件的 section headers
+
+    ELF 文件是以 ELF header 开头的，ELF header 给了 ELF 文件的所有信息。我们可以通过 ELF header 中记录的 `Start of section headers`、`Size of section headers`、`Number of section headers`、`Section header string table index` 在 ELF 文件中找到 section header 的所有信息。
+
+    - Addr
+
+      Addr列指出 Section 加载到内存中的地址（虚拟地址），目标文件中各 Section 的加载地址是待定的，所以是00000000，到链接时再确定这些地址。
+
+    - Off 和 Size
+
+      Off和Size列指出各Section的起始文件地址和长度。
+
+    - Flg
+
+      Flg 列指出各 section 的权限。
+
+    汇编器会自动添加一些 section
+
+- 链接阶段：可重定位的目标文件到可执行文件
+
+  - 链接命令
+
+    用链接器（Linker，或Link Editor）ld 把可重定位的目标文件 hello.o 链接成可执行文件 hello：
+
+    ``` console
+    ld hello.o -o hello
+    ```
+
+  > .section指示把代码划分成若干个段（Section），程序被操作系统加载执行时，每个段被加载到不同的地址，操作系统对不同的页面设置不同的读、写、执行权限。
+
+  - 链接器的工作
+
+    链接器对可重定位的目标文件进行以下操作，得到可执行文件：
+
+    - 链接器把ELF文件看成是Section的集合。将目标文件中的Section合并成几个Segment，生成可执行文件。
+
+      对链接器来说，ELF 文件中的 program header table 在链接过程中用不到，可有可无；section header table 中保存了所有Section的描述信息，通过Section Header Table可以找到每个Section在文件中的位置。
+
+      一个或多个 section 组成一个 segment。有些Section只对链接器有意义，在运行时用不到，也不需要加载到内存，那么就不属于任何Segment。
+
+    - 链接器修改目标文件中的信息，对地址做重定位
+
+    - 链接器可以把多个目标文件合并成一个可执行文件。如果只有一个目标文件，也需要经过链接才能成为可执行文件。
 
   - `-l` 选项
 
@@ -680,13 +780,58 @@
 
 - 可执行文件
 
-  - 默认的可执行文件名 `a.out`
+- 加载：可执行文件到进程
 
-    `a.out` 是 Assembler Output 的缩写。
+  保存在硬盘上的程序是不能被CPU直接取指令执行的，操作系统在执行程序时会把它从硬盘拷贝到内存，这样CPU才能取指令执行，这个过程称为加载（Load）。
 
-  - 改变可执行文件名
+  程序加载到内存之后，成为操作系统调度执行的一个任务，就称为进程（Process）。
 
-    `$ gcc main.c -o main`
+  - 加载器的工作
+
+    加载器把ELF文件看成是Segment的集合。
+
+    加载器（Loader）根据可执行文件中的Segment信息加载运行这个程序。
+
+    对加载器来说，ELF 文件中的 Section Header Table 在加载过程中用不到，可有可无；program header table 中保存了所有segment的描述信息，通过 program header table 可以找到每个 segment 在文件中的位置。
+
+- 执行：CPU 执行可执行文件
+
+  CPU 只重复做一件事：根据程序计数器寄存器中保存的下一条指令地址，从内存中取得这条指令，执行这条指令。
+
+  可执行文件中的地址是虚拟地址，CPU 执行单元在工作时要访问一个虚拟地址，读这个地址上数据，或者写数据到这个地址上。
+
+  CPU 执行单元发出虚拟地址后，先在 cache 中进行查找：
+
+  - 如果 cache 中缓存了这个虚拟地址，需要检查对应的访问权限。
+
+    - 如果允许访问，就不需要访问物理内存了：
+
+      - 如果是读操作，直接将数据传给 CPU 寄存器；
+      - 如果是写操作就直接把数据写到 cache 中（涉及 cache 如何把数据更新到内存中）。
+
+    - 如果不允许访问，cache 会产生一个异常，CPU 处理异常。
+
+  - 如果 cache 中没有缓存这个虚拟地址，就需要访问物理内存。虚拟地址翻译成物理地址，可能成功，可能失败：
+
+    - 如果成功，访问物理内存时进行相应的读写操作，另外还要在这个物理内存周围取一个 cache line 放到 cache 中。
+
+      虚拟内存如何翻译为物理内存？虚拟内存通过 MMU 翻译为物理内存。
+
+      MMU 通过 page table 将一个虚拟内存转换为物理内存。page table 中保存的是虚拟内存的 page 到物理内存的 page frame 的映射关系。
+
+      操作系统在初始化或分配、释放内存时会执行一些指令在物理内存中填写 page table，然后用指令设置 MMU，告诉 MMU page table 在物理内存中的什么位置。设置好之后，CPU 每次执行访问内存的指令都会自动引发 MMU 做查表和地址转换操作，地址转换操作由硬件自动完成，不需要用指令控制 MMU 去做。
+
+    - 如果失败，MMU 产生一个异常，CPU 处理异常。
+
+      为什么会失败？
+
+      操作系统在填写 page table 时，还设置了每个 page 的权限（可读、可写、可执行；用户模式、特权模式）。当 CPU 要访问一个 VA 时，MMU 会检查 CPU 当前处于用户模式还是特权模式，访问内存的目的是读数据、写数据还是取指令，如果和操作系统设定的页面权限相符，就允许访问，把它转换成 PA，否则不允许访问，产生一个异常（Exception）。
+
+      实际上，段错误就是因为程序访问了无权访问的虚拟地址。
+
+
+
+
 
 ### 编译、汇编、链接
 
@@ -697,6 +842,8 @@
 ## Bash
 
 `$?`
+
+可以用 $? 查看可执行文件返回的值。
 
 ## 转义序列
 
