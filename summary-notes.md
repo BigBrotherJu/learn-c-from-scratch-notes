@@ -664,7 +664,7 @@
 
   - 预处理命令
 
-    可以用这两种方式对 C 代码进行预处理，得到预处理后的 C 代码：
+    可以用这两种方式对 C 代码 main.c 进行预处理，得到预处理后的 C 代码：
 
     - `$gcc -E main.c`
 
@@ -728,25 +728,75 @@
 
       `Number of section headers` 表示 section header table 中 section header 的数量。
 
-      `Section header string table index` 表示 section header string table （它也是一个 section）在 section header table 中的位置。这个 section 是汇编器自己加的。
+      `Section header string table index` 表示 section header string table（.shstrtab）（它也是一个 section）在 section header table 中的位置。这个 section 是汇编器自己加的。
 
   - 可重定位的目标文件的 section headers
 
     ELF 文件是以 ELF header 开头的，ELF header 给了 ELF 文件的所有信息。我们可以通过 ELF header 中记录的 `Start of section headers`、`Size of section headers`、`Number of section headers`、`Section header string table index` 在 ELF 文件中找到 section header 的所有信息。
 
-    - Addr
+    - section header 的属性
 
-      Addr列指出 Section 加载到内存中的地址（虚拟地址），目标文件中各 Section 的加载地址是待定的，所以是00000000，到链接时再确定这些地址。
+      - Addr
 
-    - Off 和 Size
+        Addr列指出 Section 加载到内存中的地址（虚拟地址），目标文件中各 Section 的加载地址是待定的，所以是00000000，到链接时再确定这些地址。
 
-      Off和Size列指出各Section的起始文件地址和长度。
+      - Off 和 Size
 
-    - Flg
+        Off 和 Size 列指出各 Section 的起始文件地址和长度。
 
-      Flg 列指出各 section 的权限。
+      - Flg
 
-    汇编器会自动添加一些 section
+        Flg 列指出各 section 的权限。
+
+        .data 段可读可写，相当于C程序的全局变量。
+
+        .text 段保存代码，是只读和可执行的。
+
+    - 汇编器自动添加的 section
+
+      - .shstrtab
+
+        .shstrtab 段以 ASCII 码形式保存着各 Section 的名字，每个 section 名字以 \0 结尾。
+
+      - .strtab
+
+        .strtab 段以 ASCII 码形式保存着程序中用到的符号的名字，每个名字以 \0 结尾。
+
+      - .bss ???
+
+        我们知道，C语言的全局变量如果在代码中没有初始化，就会在程序加载时用0初始化。
+
+        这种数据属于.bss段，在加载时它和.data段一样都是可读可写的数据，但是在ELF文件中.data段需要占用一部分空间保存初始值，而.bss段则不需要。
+
+        也就是说，.bss段在文件中只占一个Section Header而没有对应的Section，程序加载时.bss段占多大内存空间在Section Header中描述。
+
+        在我们这个例子中没有用到.bss段，在第18.3节会看到这样的例子。
+
+      - .rel.text ???
+
+        .rel.text告诉链接器指令中的哪些地方需要做重定位，在下一小节详细讨论。
+
+      - .symtab
+
+  - 可重定位的目标文件的 symbol table
+
+    symbol table，也就是符号表是从 .symtab 段中读出来的。
+
+    - Ndx
+
+      Ndx列是每个符号所在的Section编号，例如符号data_items在第3个Section里（也就是.data段），各Section的编号见Section Header Table。
+
+    - Value
+
+      Value列是每个符号所代表的地址，在目标文件中，符号地址都是相对于该符号所在Section的相对地址，比如data_items位于.data段的开头，所以地址是0，_start位于.text段的开头，所以地址也是0，但是start_loop和loop_exit相对于.text段的地址就不是0了。
+
+    - Bind
+
+      从Bind这一列可以看出_start这个符号是GLOBAL的，而其他符号是LOCAL的，在汇编程序中用.globl指示声明过的符号会成为全局符号，否则成为局部符号。
+
+  - 可重定位的目标文件的 .text
+
+    目标文件中的指令中的符号全部被替换为地址，这个地址就是 symbol table 里每个符号对应的地址，是相对于 section 的地址。
 
 - 链接阶段：可重定位的目标文件到可执行文件
 
@@ -770,15 +820,19 @@
 
       一个或多个 section 组成一个 segment。有些Section只对链接器有意义，在运行时用不到，也不需要加载到内存，那么就不属于任何Segment。
 
-    - 链接器修改目标文件中的信息，对地址做重定位
+    - 链接器修改目标文件中的信息，对地址做重定位，在第17.5.2节详细解释
 
-    - 链接器可以把多个目标文件合并成一个可执行文件。如果只有一个目标文件，也需要经过链接才能成为可执行文件。
+      链接器要修改指令，把其中的相对地址都改成加载时的内存地址，这些指令才能正确执行。
+
+    - 链接器可以把多个目标文件合并成一个可执行文件，在第18.2节详细解释。如果只有一个目标文件，也需要经过链接才能成为可执行文件。
 
   - `-l` 选项
 
     链接库文件时，需要根据库文件文件名用相应的选项执行 GCC。如链接 `libm.so`，命令为 `$gcc main.c -lm`。`-lc` 不用加上，这是 GCC 默认选项。
 
 - 可执行文件
+
+  一个 segment 只能有一种权限。
 
 - 加载：可执行文件到进程
 
