@@ -72,6 +72,10 @@
 
       打印详细的编译链接过程，详见第18.2节。
 
+      ``` console
+      gcc -v main.c -o main
+      ```
+
     - -Wall
 
       打印所有的警告信息，详见第1.4节。
@@ -102,13 +106,25 @@
 
       汇编器，详见例17.1。
 
+      ``` console
+      as hello.s -o hello.o
+      ```
+
     - hexdump
 
       二进制文件查看工具，以十六进制或ASCII字符显示一个文件，详见第17.5.1节。
 
+      ``` console
+      hd max.o
+      ```
+
     - ld
 
       链接器，详见例17.1，用--verbose选项可以显示默认链接脚本，详见第19.1节。
+
+      ``` console
+      ld hello.o -o hello
+      ```
 
     - ldd
 
@@ -122,9 +138,19 @@
 
       查看符号表，详见第18.2节。
 
+      ``` console
+      nm /usr/lib/crt1.o
+      ```
+
     - objdump
 
       显示目标文件中的信息，在本书中主要用它做反汇编，详见第17.5.1节。
+
+      ``` console
+      objdump -d max.o
+      objdump -d max
+      objdump -S max
+      ```
 
     - od
 
@@ -138,6 +164,15 @@
 
       读ELF文件信息，详见第17.5.1节。
 
+      ``` console
+      readelf -a max.o
+      readelf -a max
+      ```
+
     - strip
 
       去除可执行文件中的符号信息，详见第17.5.2节。
+
+      ``` console
+      strip max
+      ```

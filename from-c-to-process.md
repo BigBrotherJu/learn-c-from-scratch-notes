@@ -1,8 +1,8 @@
 # 从源代码到进程的整个过程
 
-一个 C 源代码文件要先被编译器翻译成汇编程序，再被汇编器翻译成机器指令，最后还要经过链接器的处理才能成为可执行文件。
-
-编译器的工作分为两个阶段，先是预处理（Preprocess）阶段，然后才是编译阶段。
+> 一个 C 源代码文件要先被编译器翻译成汇编程序，再被汇编器翻译成机器指令，最后还要经过链接器的处理才能成为可执行文件。
+>
+> 编译器的工作分为两个阶段，先是预处理（Preprocess）阶段，然后才是编译阶段。
 
 ## 预处理阶段：C 代码到预处理后的 C 代码
 
@@ -22,9 +22,9 @@
 
 ## 编译阶段：预处理后的 C 代码到汇编代码
 
-- 让 GCC 提示所有警告信息
+### 编译命令
 
-  在使用 GCC 编译的时候加上 `-Wall` 选项。
+要查看编译后的汇编代码，其实还有一种办法是gcc -S main.c，这样只生成汇编代码main.s，而不生成二进制的目标文件。
 
 ## 汇编阶段：汇编代码到可重定位的目标文件
 
@@ -284,6 +284,12 @@ Disassembly of section .text:
 
 跳转指令中的符号不用替换，因为这些跳转实际上都是相对跳转，指令没有 reference 符号。
 
+## 库文件
+
+在链接过程中还用-l选项指定了一些库文件，有libc、libgcc、libgcc_s，
+
+有些库是共享库，需要动态链接，所以用-dynamic-linker选项指定动态链接器是/lib/ld-linux.so.2。
+
 ## 链接阶段：可重定位的目标文件到可执行文件
 
 ### 链接命令
@@ -456,6 +462,21 @@ hello 中有两个 segment，.text段和前面的ELF Header、Program Header Tab
 
 #### Symbol table
 
+``` console
+Symbol table '.symtab' contains 10 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND
+     1: 08048074     0 SECTION LOCAL  DEFAULT    1
+     2: 080490a0     0 SECTION LOCAL  DEFAULT    2
+     3: 080490a0     0 NOTYPE  LOCAL  DEFAULT    2 data_items
+     4: 08048082     0 NOTYPE  LOCAL  DEFAULT    1 start_loop
+     5: 08048097     0 NOTYPE  LOCAL  DEFAULT    1 loop_exit
+     6: 08048074     0 NOTYPE  GLOBAL DEFAULT    1 _start
+     7: 080490d8     0 NOTYPE  GLOBAL DEFAULT  ABS __bss_start
+     8: 080490d8     0 NOTYPE  GLOBAL DEFAULT  ABS _edata
+     9: 080490d8     0 NOTYPE  GLOBAL DEFAULT  ABS _end
+```
+
 原来目标文件符号表中的Value都是相对地址，现在都改成绝对地址了。
 
 此外还多了三个符号__bss_start、_edata和_end，这些符号在链接脚本中定义，被链接器添加到可执行文件中，链接脚本在第19.1节介绍。
@@ -493,6 +514,15 @@ Disassembly of section .text:
 指令中只有 data_items 对应的相对地址根据 .rel.text 改成了绝对地址。
 
 跳转指令中指定的是相对于当前指令向前或向后跳多少字节，而不是指定一个完整的内存地址，内存地址有32位，这些跳转指令只有16位，显然也不可能指定一个完整的内存地址，这称为相对跳转。这种相对跳转指令只有16位，只能在当前指令前后的一个小范围内跳转，不可能跳得太远，也有的跳转指令指定一个完整的内存地址，可以跳到任何地方，称为绝对跳转。
+
+- 汇编代码和 C 代码穿插显示
+
+  ``` console
+  gcc main.c -g
+  objdump -dS a.out
+  ```
+
+  如果在编译时加上-g选项（在第10章讲过-g选项），那么用objdump反汇编时可以把C代码和汇编代码穿插起来显示，这样C代码和汇编代码的对应关系看得更清楚。
 
 ## 去除符号信息的可执行文件
 
