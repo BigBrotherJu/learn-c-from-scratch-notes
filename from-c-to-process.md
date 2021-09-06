@@ -1,8 +1,10 @@
 # 从源代码到进程的整个过程
 
-> 一个 C 源代码文件要先被编译器翻译成汇编程序，再被汇编器翻译成机器指令，最后还要经过链接器的处理才能成为可执行文件。
->
-> 编译器的工作分为两个阶段，先是预处理（Preprocess）阶段，然后才是编译阶段。
+一个 C 代码文件要被预处理器预处理成预处理后的 C 代码文件，然后被编译器编译成汇编代码文件，再被汇编器汇编成可重定位的目标文件，最后被链接器链接系统提供的其他目标文件和库文件成一个可执行文件。
+
+多个 C 代码文件要被预处理器预处理成多个预处理后的 C 代码文件，然后被编译器编译成多个汇编代码文件，再被汇编器汇编成多个可重定位的目标文件，最后被链接器链接系统提供的其他目标文件和库文件成一个可执行文件。
+
+这个过程中 gcc 分别调动 cc1、as、collect2。
 
 ## 预处理阶段：C 代码到预处理后的 C 代码
 
@@ -24,33 +26,51 @@
 
 ### 编译命令
 
-要查看编译后的汇编代码，其实还有一种办法是gcc -S main.c，这样只生成汇编代码main.s，而不生成二进制的目标文件。
+gcc -S main.c 将 main.c 进行预处理，然后编译成汇编代码 main.s。
+
+### 编译器的工作
+
+### 内联汇编
+
+gcc 提供了一种扩展语法可以在 C 代码中使用内联汇编，详见 [C 内联汇编](part-2/chapter-18.md#18.5-C-内联汇编)
+
+## 汇编代码
+
+汇编代码可以自己直接写，如 17.3 节中的汇编代码；也可以通过 `gcc -S` 由 c 代码生成。
 
 ## 汇编阶段：汇编代码到可重定位的目标文件
 
 ### 汇编命令
 
-汇编器 as 将汇编代码 hello.s 生成可重定位的目标文件 hello.o，hello.s 是 17.3 节中的返回最大数的汇编代码：
+- as
 
-``` console
-as hello.s -o hello.o
-```
+  汇编器 as 将汇编代码 hello.s 生成可重定位的目标文件 hello.o，hello.s 是 17.3 节中的返回最大数的汇编代码：
+
+  ``` console
+  as hello.s -o hello.o
+  ```
+
+- gcc -c hello.c
+
+  gcc -c 也可以将 C 代码 hello.c 生成可重定位的目标文件 hello.o，中间要调动 cc1 和 as。
 
 ### 汇编器的工作
 
 汇编器对汇编代码进行以下操作，得到可重定位的目标文件：
 
-- 汇编器将汇编代码中的助记符翻译成机器指令。
+- 汇编器将汇编代码中的助记符翻译成机器指令
 
-- 汇编器将汇编代码中所有的符号替换成对应的地址，放入可重定位的目标文件。
+- 汇编器将汇编代码中每个符号替换成符号代表的地址，放入可重定位的目标文件
 
   符号和地址的对应关系在 symbol table 里，这里的地址是相对符号所在段的地址。
 
-- 汇编器将汇编代码中的 section 搬入可重定位的目标文件，另外还会往可重定位的目标文件中添加另外一些 section（比如符号表）。
+- 汇编器将汇编代码中的 section 放入可重定位的目标文件，另外还会往可重定位的目标文件中添加另外一些 section（比如符号表）
 
 ## 可重定位的目标文件
 
-目标文件由若干个Section组成，我们在汇编程序中声明的.section会成为目标文件中的Section，此外汇编器还会自动添加一些Section（比如符号表）。
+可重定位的目标文件由若干个Section组成，我们在汇编代码中声明的.section会成为可重定位的目标文件中的Section，此外汇编器还会自动添加一些Section（比如符号表）。
+
+这节展示的可重定位的目标文件是由 17.3 节中的汇编代码直接生成的，如果是由 C 代码生成汇编代码生成可重定位的目标文件，可重定位的目标文件内容可能不一样。
 
 ### readelf 结果
 
@@ -85,13 +105,13 @@ ELF Header:
 
 - `Entry point address`
 
-  程序的入口地址是0x0，因为目标文件的入口地址还没确定，链接成可执行文件时才能确定入口地址。
+  程序的入口地址是0x0，因为可重定位的目标文件的入口地址还没确定，链接成可执行文件时才能确定入口地址。
 
 - Program headers
 
   `Start of program headers`、`Size of program headers`、`Number of program headers` 都是 0。
 
-  因为目标文件没有Program Header Table，链接成可执行文件时才会有Program Header Table；
+  因为可重定位的目标文件没有Program Header Table，链接成可执行文件时才会有Program Header Table。
 
 - Section headers
 
@@ -132,7 +152,7 @@ ELF 文件是以 ELF header 开头的，ELF header 给了 ELF 文件的所有信
 
 - 所有 section
 
-  其中.text和.data是我们在汇编程序中声明的Section，而其他Section是汇编器自动添加的。
+  其中.text和.data是我们在汇编代码中声明的Section，而其他Section是汇编器自动添加的。
 
   - .text
 
@@ -144,7 +164,7 @@ ELF 文件是以 ELF header 开头的，ELF header 给了 ELF 文件的所有信
 
   - .data
 
-  - .bss ???
+  - .bss
 
     我们知道，C语言的全局变量如果在代码中没有初始化，就会在程序加载时用0初始化。
 
@@ -152,7 +172,7 @@ ELF 文件是以 ELF header 开头的，ELF header 给了 ELF 文件的所有信
 
     也就是说，.bss段在文件中只占一个Section Header而没有对应的Section，程序加载时.bss段占多大内存空间在Section Header中描述。
 
-    在我们这个例子中没有用到.bss段，在第18.3节会看到这样的例子。
+    > 在我们这个例子中没有用到.bss段，在第18.3节会看到这样的例子。
 
   - .shstrtab
 
@@ -176,7 +196,7 @@ ELF 文件是以 ELF header 开头的，ELF header 给了 ELF 文件的所有信
 
   - Addr
 
-    Addr列指出 Section 加载到内存中的地址（虚拟地址），目标文件中各 Section 的加载地址是待定的，所以是00000000，到链接时再确定这些地址。
+    Addr列指出 Section 加载到内存中的地址（虚拟地址），可重定位的目标文件中各 Section 的加载地址是待定的，所以是00000000，到链接时再确定这些地址。
 
   - Off 和 Size
 
@@ -238,15 +258,15 @@ symbol table，也就是符号表是从 .symtab 段中读出来的。
 
 - Value
 
-  Value列是每个符号所代表的地址，在目标文件中，符号地址都是相对于该符号所在Section的相对地址，比如data_items位于.data段的开头，所以地址是0，_start位于.text段的开头，所以地址也是0，但是start_loop和loop_exit相对于.text段的地址就不是0了。
+  Value列是每个符号所代表的地址，在可重定位的目标文件中，符号地址都是相对于该符号所在Section的相对地址，比如data_items位于.data段的开头，所以地址是0，_start位于.text段的开头，所以地址也是0，但是start_loop和loop_exit相对于.text段的地址就不是0了。
 
 - Bind
 
-  从Bind这一列可以看出_start这个符号是GLOBAL的，而其他符号是LOCAL的，在汇编程序中用.globl指示声明过的符号会成为全局符号，否则成为局部符号。
+  从Bind这一列可以看出_start这个符号是GLOBAL的，而其他符号是LOCAL的，在汇编代码中用.globl指示声明过的符号会成为全局符号，否则成为局部符号。
 
-  _start就像C程序的main函数一样特殊，是整个程序的入口，链接器在链接时会查找目标文件中的_start符号代表的地址，把它设置为整个程序的入口地址，所以每个汇编程序都要提供一个_start符号并且用.globl声明。
+  全局符号会被链接器进行链接；局部符号只在汇编代码内部使用，不会被链接器用到。
 
-  如果一个符号没有用.globl声明，就表示这个符号只在汇编代码内部使用，不会被链接器用到。
+  _start就像C程序的main函数一样特殊，是整个程序的入口，链接器在链接时会查找可重定位的目标文件中的_start符号代表的地址，把它设置为整个程序的入口地址，所以每个汇编代码都要提供一个_start符号并且用.globl声明。
 
 ### .text
 
@@ -278,33 +298,158 @@ Disassembly of section .text:
   28:   cd 80                   int    $0x80
 ```
 
-目标文件中的指令中的符号全部被替换为地址，这个地址就是 symbol table 里每个符号对应的地址，是相对于 section 的地址。
+可重定位的目标文件中的指令中的符号全部被替换为地址，这个地址就是 symbol table 里每个符号对应的地址，是相对于 section 的地址。
 
 实际上只有符号 data_items 被替换了。data_items 被替换为相对地址，下一步链接器根据 .rel.text 的内容将 data_items 换成绝对的虚拟地址。
 
-跳转指令中的符号不用替换，因为这些跳转实际上都是相对跳转，指令没有 reference 符号。
+跳转指令中的符号不用替换，因为这些跳转实际上都是相对跳转，指令没有 reference 符号。详细解释见可执行文件的[.text](#.text-1)
 
 ## 库文件
 
-在链接过程中还用-l选项指定了一些库文件，有libc、libgcc、libgcc_s，
+### 库文件名
 
-有些库是共享库，需要动态链接，所以用-dynamic-linker选项指定动态链接器是/lib/ld-linux.so.2。
+库文件名都是以 lib 开头的。
+
+- 静态库
+
+  静态库以.a作为后缀，表示Archive。
+
+- 共享库
+
+  按照共享库的命名惯例，每个共享库有三个文件名：real name、soname和linker name。
+
+  - real name
+
+    真正的库文件（而不是符号链接）的名字是real name，包含完整的共享库版本号，例如 libcap.so.2.17、libc-2.11.1.so、libcidn-2.11.1.so等。
+
+    注意动态链接器的名字特殊，不叫libxxx，而叫ld-2.11.1.so。
+
+  - soname：动态链接器需要
+
+    soname是符号链接的名字，只包含共享库的主版本号，主版本号一致即可保证库函数的接口一致。
+
+    可执行文件的.dynamic段只记录共享库的soname，动态链接器只要找到soname一致的共享库就可以加载它做动态链接。
+
+    例如上面的libcap.so.2其实是指向libcap.so.2.17的符号链接，这说明主版本号是2，次版本号是17，其实应用程序并不关心这个符号链接所指向的真正的库文件是libcap.so.2.17还是libcap.so.2.16，应用程序只认libcap.so.2这个soname，只要soname正确，这个共享库就应该提供了应用程序所需要的接口，就应该可以正确链接和运行，这意味着libcap.so.2.17和libcap.so.2.16相比可能增加了一些函数接口，或者修正了一些Bug，但绝不应该修改或删除了一些函数接口。
+
+    使用共享库可以很方便地升级库文件（改一下符号链接的指向就可以了）而不需要重新编译程序，这是静态库所没有的优点。
+
+    注意libc的版本编号有一点特殊，libc-2.11.1.so的主版本号是6而不是2或2.11，这也是由于历史原因，Linux曾经用过另外一套libc的实现，后来才改用glibc，但主版本号仍沿用了原来的。
+
+    另外，动态链接器的soname也很特殊，叫ld-linux.so.2，它指向ld-2.11.1.so。
+
+  - linker name：链接器需要
+
+    linker name 以.so作为后缀，表示 Shared Object。
+
+    linker name仅在编译链接时使用，gcc的-L选项应该指定linker name所在的目录。
+
+    有的linker name是库文件的一个符号链接，有的linker name是一段链接脚本。例如上面的libc.so就是一个linker name，它是一段链接脚本，其中指定了soname的路径和其他需要提供给链接器的信息。
+
+    ``` console
+    $ cat /usr/lib/libc.so
+    /* GNU ld script
+       Use the shared library, but some functions are only in
+       the static library, so try that secondarily.  */
+    OUTPUT_FORMAT(elf32-i386)
+    GROUP ( /lib/libc.so.6 /usr/lib/libc_nonshared.a  AS_NEEDED ( /lib/ld-linux.so.2 ) )
+    ```
+
+### 创建静态库
+
+1.  将 C 文件编译成目标文件
+
+    ``` console
+    gcc -c stack.c push.c pop.c is_empty.c
+    ```
+
+2.  用 ar 命令将目标文件打包成静态库
+
+    ``` console
+    $ ar rs libstack.a stack.o push.o pop.o is_empty.o
+    ar: creating libstack.a
+    ```
+
+    ar命令类似于tar命令，也是用来打包的，但是把目标文件打包成静态库的格式只能用ar命令而不能用tar命令。
+
+    选项r表示将后面的目标文件列表添加到文件包libstack.a，如果libstack.a不存在就创建它，如果libstack.a中已有同名的目标文件就替换成新的。
+
+    选项s表示为静态库创建索引，这个索引被链接器使用。ranlib命令也可以为静态库创建索引，以上命令等价于：
+
+    ``` console
+    ar r libstack.a stack.o push.o pop.o is_empty.o
+    ranlib libstack.a
+    ```
+
+### 创建共享库
+
+1.  先生成 PIC 目标文件
+
+    组成共享库的目标文件和一般的目标文件有所不同，在编译时要加-fPIC选项，例如：
+
+    ``` console
+    gcc -c -fPIC stack.c push.c pop.c is_empty.c
+    ```
+
+    -f后面跟一些编译选项，PIC是其中一种，表示生成位置无关代码（Position Independent Code）。
+
+2.  将 PIC 目标文件整合成共享库
+
+    不指定 soname 的话，soname 就是 libstack.so，默认的 soname 在共享库中不会记录，生成的可执行文件中记录的是 libstack.so：
+
+    ``` console
+    gcc -shared -o libstack.so stack.o push.o pop.o is_empty.o
+    ```
+
+    指定 soname 的话，共享库中会记录这个 soname，生成的可执行文件中也记录这个 soname：
+
+    ``` console
+    gcc -shared -Wl,-soname,libstack.so.1 -o libstack.so.1.0 stack.o push.o pop.o is_empty.o
+    ```
+
+    这样编译生成的库文件是libstack.so.1.0，是real name，但这个库文件中记录了它的soname是libstack.so.1。
+
+    如果把libstack.so.1.0所在的目录加入/etc/ld.so.conf中，然后运行ldconfig命令，ldconfig会在 libstack.so.1.0 的目录中自动创建一个libstack.so.1，它是指向 libstack.so.1.0 的符号链接。
+
+    但是调用 `gcc main.c -L. -lstack` 时会出错，因为 gcc 只认 linker name，所以我们要创建一个 libstack.so，这个 libstack.so 是指向 libstack.so.1.0 的符号链接。再编译就没问题了。
+
+    生成的可执行文件中记录的是 libstack.so.1。
 
 ## 链接阶段：可重定位的目标文件到可执行文件
 
 ### 链接命令
 
-用链接器（Linker，或Link Editor）ld 把可重定位的目标文件 hello.o 链接成可执行文件 hello：
+- ld
 
-``` console
-ld hello.o -o hello
-```
+  链接器（Linker，或Link Editor）ld 将可重定位的目标文件 hello.o 链接成可执行文件 hello：
+
+  ``` console
+  ld hello.o -o hello
+  ```
+
+- gcc xxx.c
+
+  用 gcc 将单个 C 文件生成可执行文件时，先调动 cc1 和 as，得到可重定位的目标文件。最后会调动 collect2 将 crt1.o、crti.o、crtbegin.o、crtend.o、crtn.o 、库文件 libc、libgcc、libgcc_s、我们自己的可重定位的目标文件进行链接。collect2 调动 ld，真正进行链接的是 ld。
+
+  ``` console
+  $ gcc main.c -o main -v
+  ...
+   /usr/lib/gcc/i486-linux-gnu/4.4.3/collect2 --build-id --eh-frame-hdr -m elf_i386 --hash-style=both -dynamic-linker /lib/ld-linux.so.2 -o main -z relro /usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib/crt1.o /usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib/crti.o /usr/lib/gcc/i486-linux-gnu/4.4.3/crtbegin.o -L/usr/lib/gcc/i486-linux-gnu/4.4.3 -L/usr/lib/gcc/i486-linux-gnu/4.4.3 -L/usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/i486-linux-gnu/4.4.3/../../.. -L/usr/lib/i486-linux-gnu /tmp/ccIaCwo7.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/i486-linux-gnu/4.4.3/crtend.o /usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib/crtn.o
+  ```
+
+- gcc xxx.c yyy.c zzz.c ...
+
+  用 gcc 将多个 C 文件生成可执行文件时，先对每个 C 文件调动 cc1 和 as，得到多个可重定位的目标文件。最后调用 collect2 将 crt1.o、crti.o、crtbegin.o、crtend.o、crtn.o、库文件 libc、libgcc、libgcc_s、我们自己的多个可重定位的目标文件进行链接。collect2 调动 ld，真正进行链接的是 ld。
+
+- gcc xxx.c -lyyy -Lzzz
+
+  除了系统提供的库文件 libc、libgcc、libgcc_s，我们还可以自己指明要和哪个库文件进行链接。
 
 ### 链接器的工作
 
 链接器对可重定位的目标文件进行以下操作，得到可执行文件：
 
-- 链接器把ELF文件看成是Section的集合。将目标文件中的Section合并成几个Segment，生成可执行文件。
+- 链接器把ELF文件看成是Section的集合，将可重定位的目标文件中的Section合并成几个Segment，生成可执行文件
 
   对链接器来说，ELF 文件中的 program header table 在链接过程中用不到，可有可无；section header table 中保存了所有Section的描述信息，通过Section Header Table可以找到每个Section在文件中的位置。
 
@@ -314,29 +459,69 @@ ld hello.o -o hello
 
   还有一些 section 没有存在的必要，在可执行文件中被删除了。
 
-- 链接器修改目标文件中的信息，对地址做重定位
+  这个过程根据**链接脚本**进行。
+
+- 链接器修改可重定位的目标文件中的信息，对地址做重定位
 
   链接器要修改指令，把其中的相对地址都改成加载时的内存地址，这些指令才能正确执行。
 
-- 链接器可以把多个目标文件合并成一个可执行文件，在第18.2节详细解释。如果只有一个目标文件，也需要经过链接才能成为可执行文件。
+- 链接器把多个可重定位的目标文件合并成一个可执行文件，并将多个可重定位的目标文件中的符号做好**符号解析**
 
-- 我的理解 ???
+  如果只有一个可重定位的目标文件，也需要经过链接才能成为可执行文件。
 
-  链接器先把目标文件中没用的 section（比如 .bss）删掉，然后根据需要加载运行的 section，声明一些 segment，并指明每一个 segment 都包含哪些需要加载运行的 section。
+  一个目标文件中引用了某个符号，链接器在另一个目标文件中找到这个符号的定义并确定它的地址，这个过程叫做符号解析（Symbol Resolution）。
 
-  然后链接器找到合适的虚拟地址，更新每个 segment 的地址，顺便更新和这些 segment 有关的 section 的地址。再更新 symbol table 里的 symbol 对应地址。
+  凡是被多次声明的变量或函数，必须有且只有一个声明是定义，如果有多个定义，或者一个定义都没有，链接器就无法完成链接。
 
-  然后把 symbol table 中 _start 的地址设成 entry point address。
+- 链接器将可重定位的目标文件和库文件进行链接
 
-  然后链接器根据 .rel.text 在 .text 中把需要的重定位的 symbol 的地址给更新。
+  gcc 不加 -l 和 -L 选项时，也会调动 collect2，会用 -l 指定库文件 libc、libgcc、libgcc_s，并用 -L 指定搜索库文件的目录。
 
-  最后把 .rel.text 删掉，在 symbol table 中加上 __bss_start、_edata、_end，生成可执行文件。
+  我们也可以在调用 gcc 时自己加上 -l 和 -L 选项，使用自己创建的库文件。
 
-- `-l` 选项
+  - 如何搜索共享库和静态库
 
-  链接库文件时，需要根据库文件文件名用相应的选项执行 GCC。如链接 `libm.so`，命令为 `$gcc main.c -lm`。`-lc` 不用加上，这是 GCC 默认选项。
+    在处理 -lxxx 选项时，gcc首先到-L选项指定的目录下查找，首先看有没有共享库libxxx.so，如果有就链接它，否则再找有没有静态库libxxx.a，如果有就链接它，如果还是没有，就到默认搜索路径下按同样的步骤查找。默认路径是 `$ gcc -print-search-dirs` 结果中的 libraries。
 
-## 可执行文件
+    gcc在链接时优先考虑共享库，其次才是静态库，如果希望gcc只考虑静态库，可以指定-static选项。
+
+  - 动态链接器
+
+    如果指定了共享库，需要动态链接，所以用-dynamic-linker选项指定动态链接器是/lib/ld-linux.so.2。
+
+    我们调用 gcc 时，gcc 已经在调动 collect2 的时候处理好了这个选项，我们不用自己指明动态链接器。
+
+  - 链接共享库和静态库时做的工作
+
+    链接共享库时，链接器只是确认可执行文件引用的某些符号在libxxx中有定义，并没有最终确定这些符号的地址，这些符号在可执行文件中仍然是未定义符号，要在运行时做动态链接。
+
+    因为动态链接是在加载可执行文件后做的，所以链接器要在可执行文件中记录动态链接器的路径和共享库的路径。这样当可执行文件被加载后才能正常进行动态链接。
+
+    而链接静态库时，链接器会把静态库中的目标文件取出来和可执行文件真正链接在一起。另外，和一个静态库链接与直接和这个静态库中需要的目标文件链接没有区别。静态库只是打个包而已。
+
+    如果可执行文件中的未定义符号在动态库或静态库中没有定义，那么 collect2 会报错。
+
+- 我的理解
+
+  链接器先根据链接脚本创建一些 segment，并将合适的 section 分到合适的 segment，这时 segment 和 section 也都分到了虚拟地址。链接器还会根据链接脚本添加一些特殊地址定义成的符号，例如 __bss_start 和 _end。
+
+  然后链接器需要根据重定位段对一些 section 中的指令进行重定位。链接器还需要进行符号解析。
+
+  最后一些没用的段会被删掉。
+
+### 链接脚本
+
+链接过程是由一个链接脚本（Linker Script）控制的，链接脚本决定了给每个段分配什么地址，如何对齐，不同可重定位的目标文件的相同段哪个段在前，哪个段在后，哪些段合并到同一个Segment。
+
+另外链接脚本还要把一些特殊地址定义成符号，例如__bss_start代表.bss段的起始地址，_end代表.bss段的结束地址，这些符号会出现在可执行文件的符号表中，加载器可以由这些符号得知.bss段的地址范围，以便把它清零。
+
+如果用ld做链接时没有通过-T选项指定链接脚本，则使用ld的默认链接脚本，默认链接脚本可以用ld --verbose命令查看。
+
+详细见[链接脚本](part-2/chapter-19.md#链接脚本)。
+
+## 汇编代码生成的可执行文件
+
+这节展示的可执行文件是 17.3 节的汇编代码直接生成的，如果是由 C 代码生成汇编代码生成生成可重定位的目标文件生成可执行文件，可执行文件内容可能不一样。
 
 ### readelf 结果
 
@@ -428,6 +613,10 @@ Program Headers:
 
 hello 中有两个 segment，.text段和前面的ELF Header、Program Header Table一起组成一个Segment（FileSiz指出总长度是0x9e），.data段组成另一个Segment（总长度是0x38），以后我们把这两个Segment分别叫做Text Segment和Data Segment。
 
+- Offset
+
+  Offset 是 program header 第一个字节在文件中的位置。
+
 - FileSiz
 
   FileSiz 指出 segment 的总长度。
@@ -477,9 +666,13 @@ Symbol table '.symtab' contains 10 entries:
      9: 080490d8     0 NOTYPE  GLOBAL DEFAULT  ABS _end
 ```
 
-原来目标文件符号表中的Value都是相对地址，现在都改成绝对地址了。
+原来可重定位的目标文件符号表中的Value都是相对地址，现在都改成绝对地址了。
 
-此外还多了三个符号__bss_start、_edata和_end，这些符号在链接脚本中定义，被链接器添加到可执行文件中，链接脚本在第19.1节介绍。
+`_start` 在可执行文件中必须存在，可执行文件就是从 `_start` 开始执行的。
+
+链接器根据链接脚本把一些特殊地址定义成符号，例如__bss_start代表.bss段的起始地址，_end代表.bss段的结束地址，这些符号会出现在可执行文件的符号表中，加载器可以由这些符号得知.bss段的地址范围，以便把它清零。
+
+在这里可能是 __bss_start、_edata、_end 没用处，所以地址都一样，而且 size 都是 0。_end 不知道用途是什么。
 
 ### .text
 
@@ -524,6 +717,109 @@ Disassembly of section .text:
 
   如果在编译时加上-g选项（在第10章讲过-g选项），那么用objdump反汇编时可以把C代码和汇编代码穿插起来显示，这样C代码和汇编代码的对应关系看得更清楚。
 
+## C 代码生成的可执行文件
+
+用 gcc 将 C 文件生成可执行文件时，先调动 cc1 和 as，得到可重定位的目标文件。最后会调动 collect2 将 crt1.o、crti.o、crtbegin.o、crtend.o、crtn.o 、库文件 libc、libgcc、libgcc_s、我们自己的可重定位的目标文件进行链接。collect2 调动 ld，真正进行链接的是 ld。
+
+我们先看 crt1.o：
+
+``` console
+$ nm /usr/lib/crt1.o
+00000000 R _IO_stdin_used
+00000000 D __data_start
+         U __libc_csu_fini
+         U __libc_csu_init
+         U __libc_start_main
+00000000 R _fp_hw
+00000000 T _start
+00000000 W data_start
+         U main
+$ objdump -d /usr/lib/crt1.o
+/usr/lib/crt1.o:     file format elf32-i386
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:   31 ed                   xor    %ebp,%ebp
+   2:   5e                      pop    %esi
+   3:   89 e1                   mov    %esp,%ecx
+   5:   83 e4 f0                and    $0xfffffff0,%esp
+   8:   50                      push   %eax
+   9:   54                      push   %esp
+   a:   52                      push   %edx
+   b:   68 00 00 00 00          push   $0x0
+  10:   68 00 00 00 00          push   $0x0
+  15:   51                      push   %ecx
+  16:   56                      push   %esi
+  17:   68 00 00 00 00          push   $0x0
+  1c:   e8 fc ff ff ff          call   1d <_start+0x1d>
+  21:   f4                      hlt
+  22:   90                      nop
+  23:   90                      nop
+$ readelf -a /usr/lib/crt1.o
+...
+Relocation section '.rel.text' at offset 0x49c contains 4 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name
+...
+00000018  00000d01 R_386_32          00000000   main
+...
+```
+
+call指令前面的那条push $0x0指令其实想把main这个符号所代表的地址压栈，但不知道这个地址是多少，因为这个符号在另一个目标文件中定义，到链接时才能确定其地址，所以在指令中暂时写成0x0。
+
+我们将 main.c 编译成可执行文件 main，main 的指令如下：
+
+``` console
+$ gcc -c main.c
+$ gcc main.o -o main
+$ objdump -d main
+...
+Disassembly of section .text:
+
+08048300 <_start>:
+ 8048300:   31 ed                   xor    %ebp,%ebp
+ 8048302:   5e                      pop    %esi
+ 8048303:   89 e1                   mov    %esp,%ecx
+ 8048305:   83 e4 f0                and    $0xfffffff0,%esp
+ 8048308:   50                      push   %eax
+ 8048309:   54                      push   %esp
+ 804830a:   52                      push   %edx
+ 804830b:   68 10 84 04 08          push   $0x8048410
+ 8048310:   68 20 84 04 08          push   $0x8048420
+ 8048315:   51                      push   %ecx
+ 8048316:   56                      push   %esi
+ 8048317:   68 e5 83 04 08          push   $0x80483e5
+ 804831c:   e8 c7 ff ff ff          call   80482e8 <__libc_start_main@plt>
+ 8048321:   f4                      hlt
+...
+080483b4 <bar>:
+ 80483b4:   55                      push   %ebp
+ 80483b5:   89 e5                   mov    %esp,%ebp
+ 80483b7:   83 ec 10                sub    $0x10,%esp
+...
+080483cb <foo>:
+ 80483cb:   55                      push   %ebp
+ 80483cc:   89 e5                   mov    %esp,%ebp
+ 80483ce:   83 ec 08                sub    $0x8,%esp
+...
+080483e5 <main>:
+ 80483e5:   55                      push   %ebp
+ 80483e6:   89 e5                   mov    %esp,%ebp
+ 80483e8:   83 ec 08                sub    $0x8,%esp
+...
+```
+
+链接完成后，crt1.o中定义的符号_start和main.o中定义的符号bar、foo、main都合并到可执行文件的.text段中。符号main的地址是0x080483e5，因此_start中的push $0x0指令被链接器改成了push $0x80483e5。这个过程叫做符号解析。
+
+crt1.o 引用了一个未定义符号__libc_start_main，这个符号在其他几个目标文件中也没有定义，生成的可执行文件中也没有定义。但是在共享库 libc 中有定义。根据[链接器的工作](#链接器的工作)中所说，链接共享库时，链接器只是确认可执行文件引用的某些符号在 libc 中有定义，并没有最终确定这些符号的地址，这些符号在可执行文件中仍然是未定义符号，要在运行时做动态链接。
+
+所以链接器只是在可执行文件中记录了动态链接器的路径和共享库的路径。这样当可执行文件被加载后才能正常进行动态链接。
+
+流程总结：进入 _start 后，一系列参数被压栈，main 的地址也被压栈，然后 call __libc_start_main@plt，调用 __libc_start_main 的时候需要动态链接。__libc_start_main 做初始化工作，然后根据栈中的 main 地址调用 main 函数，调用 main 函数时传 argc 和 argv 给 main 函数，main 函数可以用也可以不用。调用大概是这样 `exit(main(argc, argv));`。
+
+关于进程如何终止请看[终止：进程正常或异常终止](#终止：进程正常或异常终止)。
+
 ## 去除符号信息的可执行文件
 
 用strip命令去除可执行文件中的符号信息，这样可以有效减小文件的尺寸而不影响运行：
@@ -534,7 +830,7 @@ $ readelf -a max
 ...
 ```
 
-注意不要对目标文件和共享库使用strip命令，因为链接器需要利用目标文件和共享库中的符号信息来做链接。
+注意不要对可重定位的目标文件和共享库使用strip命令，因为链接器需要利用可重定位的目标文件和共享库中的符号信息来做链接。
 
 ## 加载：可执行文件到进程
 
@@ -548,13 +844,124 @@ $ readelf -a max
 
 加载器把保存在硬盘上的可执行文件（hello）加载到内存，得到进程：
 
-- 加载器把ELF文件看成是Segment的集合。加载器（Loader）根据可执行文件中的Segment信息加载运行这个程序。
+- 加载器把ELF文件看成是Segment的集合，加载器（Loader）根据可执行文件中的Segment信息加载运行这个程序
 
   对加载器来说，ELF 文件中的 Section Header Table 在加载过程中用不到，可有可无；program header table 中保存了所有segment的描述信息，通过 program header table 可以找到每个 segment 在文件中的位置。
 
+- 动态链接
+
+  1.  操作系统在加载执行可执行程序时，首先查看它有没有需要动态链接的未定义符号。
+
+  2.  如果需要做动态链接，就查看这个程序指定了哪些共享库，以及用什么动态链接器来做动态链接。我们在链接时用-lc选项指定了共享库libc，用-dynamic-linker/lib/ld-linux.so.2指定了动态链接器，这些信息都会写到可执行文件中。
+
+  3.  动态链接器加载共享库，在其中查找这些未定义符号的定义，完成链接过程。
+
+  这上面的第 3 步描述有点问题，完整流程见 https://stackoverflow.com/a/50790258/14067245：
+
+  The Linux kernel loads a.out into memory. It then examines PT_INTERP segment (if any).
+
+  If that segment is not present, the binary is statically linked and the kernel transfers control to the Elf{32,64}Ehdr.e_entry (usually the _start routine).
+
+  If the PT_INTERP segment is present, the kernel loads it into memory, and transfers control to it's .e_entry. It is here that the dynamic linking begins.
+
+  The dynamic loader relocates itself, then looks in a.outs PT_DYNAMIC segment for instructions on what else is necessary.
+
+  For example, it will usually find one or more DT_NEEDED entries -- shared libraries that a.out was directly linked against. The loader loads any such libraries, initializes them, and resolves any data references between them.
+
+  IF a.outs PT_DYNAMIC has a DT_FLAGS entry, and IF that entry contains DF_BIND_NOW flag, then function references from a.out will also be resolved. Otherwise (and assuming that LD_BIND_NOW is not set in the environment), lazy PLT resolution will be performed (resolving functions as part of first call to any given function).
+
+  .plt 协助完成动态链接。看 19.4.2。
+
+  - 看可执行文件需要动态链接哪些共享库
+
+    我们可以用ldd命令查看可执行文件依赖于哪些共享库：
+
+    ``` console
+    $ ldd main
+            linux-gate.so.1 =>  (0x00fe2000)
+            libstack.so => not found
+            libc.so.6 => /lib/tls/i686/cmov/libc.so.6 (0x0065a000)
+            /lib/ld-linux.so.2 (0x001de000)
+    ```
+
+    ldd模拟运行一遍main程序，在运行过程中做动态链接，从而得知这个程序依赖于哪些共享库，这些共享库都在什么路径下。
+
+    我们在第18.2节讲过gcc调动ld做链接时用-dynamic-linker /lib/ld-linux.so.2选项指定动态链接器的路径，动态链接器它也像其他共享库一样加载到进程的地址空间中。
+
+    而另外一个选项-lc只说明需要链接libc库，却没有指出libc库的完整路径，-lstack也是如此，共享库的路径需要在运行时由**动态链接器/lib/ld-linux.so.2去查找**。
+
+    在上面的例子中，动态链接器找到libc的路径是/lib/tls/i686/cmov/ libc.so.6，而libstack的路径没有找到，无法完成链接。
+
+    linux-gate.so.1这个共享库文件其实并不存在，它是由内核虚拟出来的，所以没有对应的路径。linux-gate.so.1负责处理一些特殊的系统调用，感兴趣的读者可以参考http://www.trilithium.com/ johan/2005/08/linux-gate/。
+
+  - 动态链接器到哪里搜索共享库
+
+    动态链接器查的是 soname。
+
+    1.  首先在环境变量LD_LIBRARY_PATH保存的路径中查找。
+
+        我们可以把这个环境变量设置成我们自己共享库的目录的绝对路径。这种方法只适合在开发调试中临时用一下，设置环境变量LD_LIBRARY_PATH通常是不推荐的，理由可以参考Why LD_LIBRARY_PATH is bad（http://xahlee.org/ UnixResource_dir/_/ldpath.html）。
+
+    2.  然后从缓存文件/etc/ld.so.cache中查找。这个缓存文件是由ldconfig命令读取配置文件/etc/ld.so.conf生成的。
+
+        我们可以把自己的共享库所在目录的绝对路径添加到 /etc/ld.so.conf，每个路径占一行。然后运行 ldconfig：`sudo ldconfig -v`。
+
+        ldconfig命令除了处理/etc/ld.so.conf中配置的目录之外，还处理一些默认目录，如/lib、/usr/lib等，处理的过程主要是建立索引以便快速查找，处理之后生成/etc/ld.so.cache缓存文件，动态链接器就从这个缓存文件中搜索共享库。
+
+        hwcap是x86平台Linux特有的一种机制，系统检测到当前平台是i686而不是i586或i486，所以在运行程序时使用i686的库，这样可以更好地发挥平台的性能，所以上面ldd命令的输出结果显示动态链接器搜索到的libc库是/lib/tls/i686/cmov/libc.so.6，而不是/lib/libc.so.6。
+
+    3.  如果上述步骤都找不到，则到默认的系统库文件目录中查找，先是/lib然后是/usr/lib。
+
+        我们也可以把自己的共享库直接拷贝到 /usr/lib 或 /lib。
+
+    4.  可执行文件中的 RPATH
+
+        其实我们可以直接把自己的共享库所在目录的绝对路径在调用 gcc 的时候写到可执行文件中。
+
+        ``` console
+        gcc main.c -g -L. -lstack -o main -Wl,-rpath,/home/juhan/19/19.4
+        ```
+
+        注意选项-Wl,-rpath,/home/akaedu/testdir，-Wl表示gcc传给链接器的选项，在这个例子中传给链接器的选项是-rpath /home/akaedu/testdir。可以看到readelf输出的.dynamic段的信息中多了一条rpath记录。还可以看出，可执行文件运行时需要哪些共享库也都记录在.dynamic段中。
+
+        当然rpath这种办法也是不推荐的，把共享库的搜索路径写到可执行文件中也是一种硬编码的做法。
+
+### 内存布局
+
+- 环境变量
+
+  环境变量（Environment Variable）是进程运行时保存在内存中的一组字符串，每个字符串都是“key=value”这样的形式，key是变量名，value是变量的值。
+
+  设置一个进程的环境变量有两种方法：
+
+  1.  ``` console
+      KEY=VALUE ./main
+      ```
+
+      这种方法表示只有当前创建的main进程才获得这个环境变量，Shell进程本身不保存这个环境变量，以后执行的其他命令也不会获得它。
+
+  2.  ``` console
+      export KEY=VALUE
+      ./main
+      ```
+
+      第一条命令在当前Shell进程中设置一个环境变量LD_LIBRARY_PATH=/home/ akaedu/testdir，一旦在Shell进程中设置了环境变量，以后每次执行命令时Shell进程都会把自己的环境变量传给新创建的进程，所以第二条命令创建的进程main就会获得这个环境变量。
+
+- 栈空间
+
+  在执行程序时，操作系统为进程分配一块栈空间来保存函数栈帧，esp寄存器总是指向栈顶。
+
+  在x86平台上这个栈是从高地址向低地址增长的，我们知道每次调用一个函数都要分配一个栈帧来保存参数和局部变量
+
+  为了安全性，Linux内核为每个新进程指定的栈空间起始地址是随机的，所以每次运行这个程序得到的地址都不一样，但通常都是0xbf??????这样的一个地址。
+
+- 内存布局
+
+  见[进程地址空间](#part-2/chapter-19.md#进程地址空间)。
+
 ## 执行：CPU 执行可执行文件
 
-CPU 只重复做一件事：根据程序计数器寄存器中保存的下一条指令地址，从内存中取得这条指令，执行这条指令。
+可执行文件已经被加载到内存中了。CPU 只重复做一件事：根据程序计数器寄存器中保存的下一条指令地址，从内存中取得这条指令，执行这条指令。
 
 可执行文件中的地址是虚拟地址，CPU 执行单元在工作时要访问一个虚拟地址，读这个地址上数据，或者写数据到这个地址上。
 
@@ -587,10 +994,64 @@ CPU 执行单元发出虚拟地址后，先在 cache 中进行查找：
 
     实际上，段错误就是因为程序访问了无权访问的虚拟地址。
 
+## 终止：进程正常或异常终止
 
+### 正常终止（退出）
 
-编译、汇编、链接
+- main 函数中正常使用 return
 
-> 总结一下编译执行的过程，首先你用文本编辑器写一个C程序，然后保存成一个文件，例如program.c（通常C程序的文件名后缀是.c），这称为源代码（Source Code）或源文件，然后运行编译器对它进行编译，编译的过程并不执行程序，而是把源代码全部翻译成机器指令，再加上一些描述信息，生成一个新的文件，例如a.out，这称为可执行文件，可执行文件可以被操作系统加载运行，计算机执行该文件中由编译器生成的指令，如图1.1所示。
+  main 函数如果正常使用 return 语句返回，那么这个返回值会被它的调用者接收到。main 函数大概像这样被调用 `exit(main(argc, argv));`。
 
-描述信息是什么？
+- exit 库函数
+
+  exit 是 libc 的库函数，它首先做一些清理工作，然后调用下面要说的 _exit(2) 终止进程，main 函数的返回值最终被传给 _exit(2) 系统调用函数，成为进程的退出状态。
+
+- main 函数中可以直接调用 exit 函数
+
+  我们也可以在main函数中直接调用exit函数终止进程而不返回到启动例程，例如：
+
+  ``` console
+  #include <stdio.h>
+  int main(void)
+  {
+      exit(4);
+  }
+  ```
+
+  使用时要包含头文件stdlib.h。
+
+  在 main 函数中使用 exit(4) 和 return 4 效果一样。
+
+- main 函数也可以用 _exit 函数退出
+
+  在 C 程序中也可以调用 _exit 函数退出（需要包含头文件 unistd.h），它是 _exit 系统调用的简单包装。
+
+  它可能是一个 C 函数，其中内嵌了movl $1,%eax、movl ?, %ebx和int $0x80三条指令（稍后在第18.5节介绍这种语法）。
+
+  它也可能是纯用汇编写的，但要符合C编译器的Calling Convention，这样才能当成一个C函数来调用。
+
+  这种对int $0x80指令简单包装的C函数通常也称为系统调用，在Man Page中系统调用位于第2个Section，例如_exit(2)，而库函数位于第3个Section，例如exit(3)。exit(3) 先做一些清理工作，然后调用_exit(2)进内核终止当前进程。
+
+  unistd.h 中声明的函数不是 C 标准库函数，是 POSIX 标准定义的 UNIX 系统函数。在 libc 中实现。
+
+- 正常终止
+
+  一个进程调用 exit(3) 或 _exit(2) 终止，或者从main函数返回而终止，都属于正常终止（Normal Termination），也称为退出（Exit）。
+
+### 退出状态
+
+进程执行完成后，可以查看进程的退出状态：
+
+``` console
+$ ./a.out
+$ echo $?
+4
+```
+
+按照惯例，退出状态为 0 表示程序执行成功，退出状态非 0 表示出错。
+
+退出状态只有 8 位，而且被 Shell 解释成无符号数，所以如果 return -1，`$ echo $?` 会得到 255。
+
+### 异常中止：进程收到信号，内核强行终止进程
+
+但并非所有的进程终止都是正常的，比如按Ctrl+C组合键终止一个进程，或者运行时产生段错误，或者用kill命令终止一个进程，这几种情况本质上都是进程收到一个信号然后内核把进程强行终止掉了，进程并没有执行_exit系统调用，也没有退出状态，这称为异常终止（Abnormal Termination）。关于信号请查阅参考文献[31]的第10章。

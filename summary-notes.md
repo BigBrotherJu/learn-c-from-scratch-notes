@@ -36,7 +36,211 @@
 - [Implementation-Defined, Unspecified, and Undefined](part-2/chapter-14.md#Implementation-Defined,-Unspecified,-and-Undefined)
 - [Magic Number](part-2/chapter-17.md#目标文件)
 - [POSIX 和 SUS](part-2/chapter-18.md#UNIX-标准)
+- [对齐](part-2/chapter-18.md#结构体)
 - [ABI](part-2/chapter-18.md#ABI)
+- [进程地址空间](part-2/chapter-19.md#进程地址空间)
+- [虚拟内存的作用](part-2/chapter-19.md#虚拟内存管理机制的作用)
+
+## 标识符
+
+### 标识符种类
+
+变量名、函数名、函数参数名、标号、Tag、结构体成员名、宏定义、typedef 类型名。
+
+### 标识符作用域
+
+一个标识符的作用域基本上只用看标识符是在函数外声明的还是 {} 内声明的，如果标识符前面有 specifier 和 qualifier，标识符的作用域和 specifier 和 qualifier 没有任何关系。
+
+详细见[标识符的作用域](part-2/chapter-18.md#标识符的作用域)。
+
+- 函数作用域，标识符在函数内声明，整个函数中都有效
+
+  只有标号属于函数作用域。
+
+- 文件作用域，标识符在函数外声明，从声明的位置到编译单元末尾都有效
+
+- 块作用域，标识符在 {} 中声明，从声明的位置到 } 都有效
+
+- 函数原型作用域，标识符在函数原型（非函数定义）中声明，从声明的位置到原型结束前都有效
+
+### 标识符命名空间
+
+同一命名空间的重名标识符，内层作用域的标识符将覆盖外层作用域的标识符。
+
+详细见[标识符的命名空间](part-2/chapter-18.md#标识符的命名空间)。
+
+- 标号单独属于一个命名空间
+
+- struct、enum、union 的 Tag 属于一个命名空间
+
+- struct、union 的成员名属于一个命名空间
+
+- 其他所有标识符属于一个命名空间
+
+  如果宏定义和其他标识符重名，宏定义覆盖其他所有标识符，因为宏定义在预处理阶段先处理，而其他标识符在编译阶段处理。
+
+### 标识符链接属性
+
+详细见[标识符的链接属性](part-2/chapter-18.md#标识符的链接属性)。
+
+- 外部链接
+
+  具有External Linkage的标识符编译后在目标文件中是全局符号。
+
+  如果同一个符号出现在多个编译单元编译成的目标文件中，且所有目标文件中这个符号都是全局的，那么把目标文件链接在一起后，这些符号都被换成了相同的一个提供符号定义的地址。
+
+- 内部链接
+
+  具有Internal Linkage的标识符编译后在目标文件中是局部符号，在链接时不做符号解析。
+
+- 无链接
+
+  具有无链接的标识符不会出现在目标文件的符号表中。
+
+### 变量的生存期
+
+变量的分配位置只和变量生存期有关。
+
+详细见[变量的生存期](part-2/chapter-18.md#变量的生存期)。
+
+- 静态生存期
+
+  在程序开始执行时分配内存和初始化，此后便一直存在直到程序结束。这种变量通常位于.rodata、.data或.bss段。
+
+- 自动生存期
+
+  这种变量在进入块作用域时在栈上或寄存器中分配，在退出块作用域时释放。
+
+- 动态分配生存期
+
+### 标识符属性总结
+
+- 标识符的属性
+
+  一个标识符有：
+
+  - 作用域
+  - 命名空间
+  - 链接属性
+
+- 变量的属性
+
+  如果标识符是变量，还有：
+
+  - 生存期
+
+- 变量声明前面的 specifier 和 qualifier
+
+  - storage class specifier
+
+    - static
+
+    - extern
+
+    - auto
+
+      auto 不能修饰文件作用域的变量。
+
+    - register
+
+      register 不能修饰文件作用域的变量。
+
+    - typedef
+
+  - type qualifier
+
+    - [const](part-2/chapter-18.md#函数体外-const-变量)
+
+      const 可以限定 file scope 中和 block scope 中的变量。
+
+      const 限定的变量不能更改。
+
+    - [volatile](part-2/chapter-18.md#volatile-限定符)
+
+    - restrict
+
+  - type specifier
+
+- 函数声明前面的 specifier 和 qualifier
+
+  - storage class specifier
+
+    - static
+    - extern
+
+  - function specifier
+
+    - inline
+
+  - type qualifier
+
+    - const
+    - volatile
+    - restrict
+
+  - type specifier
+
+- 判断标识符的链接属性和生存期
+
+  一个标识符的作用域和命名空间很容易判断，但是链接属性和生存期（如果标识符是变量）不好判断。
+
+  - 函数的链接属性判断
+
+    被声明的函数的链接属性只由它的 storage class 和 scope 决定。
+
+    <img alt="storage-class关键字对函数声明的作用" src="part-2/images/storage-class关键字对函数声明的作用.png" width=480>
+
+    链接属性决定了函数对应的符号在符号表里是是 GLOBAL 还是 LOCAL。
+
+    previous linkage 的意思是当前声明的这个标识符具有什么样的Linkage取决于该编译单元中前面对这个标识符的声明（而且必须是文件作用域的声明），如果在前面找不到这个标识符的声明，即当前声明是该编译单元中对这个标识符的第一次声明，那么这个标识符具有External Linkage；否则标识符的 linkage 就是标识符之前被声明时有的 linkage。
+
+    can define 表示 declaration 同时也可以是 definition。显然，函数可以在 file scope 中定义，不可以在 block scope 中定义。
+
+    block scope 中不允许用 static 声明函数。
+
+  - 变量的链接属性和生存期判断
+
+    被声明的变量的链接属性和生存期只由它的 storage class（extern/static）和 scope 决定。
+
+    <img alt="storage-class关键字对变量声明的作用" src="part-2/images/storage-class关键字对变量声明的作用.png" width=480>
+
+    - 第一行描述变量的链接属性
+
+      链接属性决定了变量对应的符号在符号表里是否存在，如果存在是 GLOBAL 还是 LOCAL。
+
+    - 第二行描述变量的生存期
+
+      如果一个变量定义有 static duration，而变量定义还有 const 限定，那么变量分配在可执行文件 .rodata 段中；如果一个变量定义有 static duration，并且已经初始化为非 0，那么变量分配在可执行文件 .data 段；如果一个变量定义有 static duration，初始化为 0 或未初始化，那么变量分配在可执行文件 .bss 段。
+
+      如果一个变量定义有 automatic duration，那么变量根据定义是否有 auto/register 修饰分配在栈或寄存器中。
+
+    - 第三行描述变量该如何初始化
+
+      static initializer 表示 initializer 只能使用常量表达式，表达式的值必须在编译时确定；
+
+      dynamic initializer 表示 initializer 中可以使用任意右值表达式，表达式的值可以在运行时计算。
+
+    - 第四行描述这种声明是否算定义
+
+      先看 block scope declaration，用 none 和 static 修饰声明时，声明可以初始化也可以不初始化，声明都会给变量分配空间，声明都是定义。如果不初始化，用 none 修饰的变量是栈或寄存器中随机的值，用 static 修饰的变量是 .bss 段中的 0；用 extern 修饰声明时，声明一定不能初始化，不然会报错。所以这个声明不会给变量分配空间。
+
+      再看 file scope declaration，用 none 和 static 修饰声明时，声明可以初始化也可以不初始化，声明都会给变量分配空间，声明都是定义。如果不初始化，这种定义叫做 tentative definition。编译器认为这个变量是在该编译单元中定义的，但初始值待定，然后继续编译下面的代码，到整个编译单元编译结束时如果没有遇到这个变量的带初始化的定义，就用0来初始化它，不初始化的变量存在 .bss 段中。
+
+      用 extern 修饰声明时，声明根据 C99 可以初始化，声明会给变量分配空间，这个声明也就是一个定义，gcc 会报警告对这种情况会报警告，但可以正常执行。如果不初始化，那么这个声明就只是声明，不给变量分配空间。
+
+    - gcc 和 C99 的差异
+
+      表中标有 [*] 的单元格意思是，对于文件作用域的 extern 变量声明，C99 允许带 initializer，并认为它是一个定义。但是gcc对于这种写法会报警告，为了兼容性应避免这种写法。
+
+      gcc对于Tentative Definition的处理也和C99的规定不一致。比如在foo.c中用int i;定义一个变量i，是Tentative Definition，C99规定这个变量应该在foo.c中定义，初始值是0，而gcc编译的结果是：
+
+      ``` console
+      $ gcc -c foo.c
+      $ nm foo.o
+      00000004 C i
+      ```
+
+      符号i的类型是Common，nm(1)中说Common符号的定义在链接时确定。如果bar.c中定义int i = 1;，则foo.c和bar.c链接在一起时foo.c的那个只能算声明而不算定义。如果bar.c中也定义int i;，也是一个Tentative Definition，则foo.c和bar.c链接在一起时才定义变量i，并且用0初始化。也就是说，C99对Tentative Definition的处理是在编译一个单元时做，而gcc是推迟到链接时才做。如果编译时加上-fno-common选项则不会生成Common符号，gcc对Tentative Definition的处理就和C99一致了。
 
 ## 源代码组成
 
@@ -54,7 +258,13 @@
 
     全局变量只能用常量表达式（由常量组成的表达式）来初始化。
 
-    如果全局变量在定义时不初始化则初始值是0。
+    如果全局变量在定义时不初始化则初始值是 0。
+
+    更详细的判断变量属性的方法见[标识符属性总结](#标识符属性总结)。
+
+  - 变量声明
+
+    更详细的判断变量属性的方法见[标识符属性总结](#标识符属性总结)。
 
   - 函数声明、函数定义
 
@@ -67,11 +277,42 @@
 
 - 预处理指令
 
-  - `#include`
+  - c 文件
 
-    #include 包含的头文件通常位于 /usr/include 目录。
+    - `#include`
 
-  - `#define`
+      > #include 包含的头文件通常位于 /usr/include 目录。
+
+      - `#include <xxx.h>`
+
+        gcc首先查找-I选项指定的目录；-I选项可以指定相对路径也可以指定绝对路径，如果指定相对路径，它是相对于gcc进程的当前工作目录的路径，而不是相对于正在被处理的#include指示所在的当前文件的路径。-I. 表示在 gcc 当前工作目录下寻找。
+
+        然后查找系统的头文件目录（在我的系统上是按/usr/local/include、/usr/lib/gcc/i486-linux-gnu/4.4.3/include、/usr/i486-linux-gnu/include、/usr/include的顺序依次查找）。
+
+      - `#include "xxx.h"`
+
+        gcc首先查找正在被处理的#include指示所在的当前文件所在的目录；如果引号中是相对路径，则是相对于正在被处理的#include指示所在的当前文件所在目录。
+
+        然后查找-I选项指定的目录；-I选项可以指定相对路径也可以指定绝对路径，如果指定相对路径，它是相对于gcc进程的当前工作目录的路径，而不是相对于正在被处理的#include指示所在的当前文件的路径。-I. 表示在 gcc 当前工作目录下寻找。
+
+        然后查找系统的头文件目录。
+
+    - `#define`
+
+  - 头文件
+
+    一般来说，.c文件中可以有变量或函数定义，.h文件中应该只有变量或函数声明而没有定义。
+
+    - Header Guard
+
+      每个头文件都要加上Header Guard，宏定义名就用头文件名的大写形式，这是规范的做法。
+
+      ``` c
+      #ifndef XXX_H
+      #define XXX_H
+      ...
+      #endif
+      ```
 
 ### 函数体内
 
@@ -87,6 +328,12 @@
 
   如果局部变量在定义时不初始化则初始值是不确定的。
 
+  更详细的判断变量属性的方法见[标识符属性总结](#标识符属性总结)。
+
+- 变量声明
+
+  更详细的判断变量属性的方法见[标识符属性总结](#标识符属性总结)。
+
 - 函数声明
 
 - 函数定义是否可以存在
@@ -100,6 +347,11 @@
   > 但gcc的扩展特性允许嵌套定义函数，本书不做详细讨论。
 
 - 类型声明
+
+  - struct
+  - enum
+  - union
+  - typedef
 
 #### 语句
 
@@ -414,7 +666,7 @@
 
     判断一个整数常量类型的方法：先根据这个常量末尾的字母在下表（出自参考文献[8]的6.4.4.1节条款5）中找到单元格，然后从上到下在单元格列出的类型中找到第一个足够大的类型，这个类型就是常量的类型。
 
-    ![整数常量的类型](part-2/images/整数常量的类型.png)
+    <img alt="整数常量的类型" src="part-2/images/整数常量的类型.png" width=480>
 
   - int 型
 
@@ -679,35 +931,108 @@
 
   在使用 GCC 编译的时候加上 `-Wall` 选项。
 
+### 编译优化选项
+
+gcc的编译优化选项有-O0、-O、-O1、-O2、-O3、-Os几种。
+
+-O0表示不优化，这是缺省的选项。
+
+-O1、-O2和-O3这几个选项一个比一个优化得更多，编译时间也更长。
+
+-O和-O1相同。
+
+-Os表示为缩小目标文件的尺寸而优化。
+
+具体每种选项做了哪些优化请参考gcc(1)。
+
+为调试而编译时不要指定优化选项。
+
 ### 展示编译的整个过程
+
+用 gcc 时加上 -v 选项，可以看到 gcc 到底调用了什么程序进行编译。
+
+#### 从 C 代码到可执行文件
 
 即使用gcc main.c -o main一步完成编译，gcc内部也还是要分三步来做，用-v选项可以了解详细的编译过程：
 
 ``` console
 gcc -v main.c -o main
+Using built-in specs.
+Target: i486-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 4.4.3-4ubuntu5' --with-bugurl=file:///usr/share/doc/gcc-4.4/README.Bugs --enable-languages=c,c++,fortran,objc,obj-c++ --prefix=/usr --enable-shared --enable-multiarch --enable-linker-build-id --with-system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --with-gxx-include-dir=/usr/include/c++/4.4 --program-suffix=-4.4 --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-plugin --enable-objc-gc --enable-targets=all --disable-werror --with-arch-32=i486 --with-tune=generic --enable-checking=release --build=i486-linux-gnu --host=i486-linux-gnu --target=i486-linux-gnu
+Thread model: posix
+gcc version 4.4.3 (Ubuntu 4.4.3-4ubuntu5)
+COLLECT_GCC_OPTIONS='-o' 'main' '-v' '-mtune=generic' '-march=i486'
+ /usr/lib/gcc/i486-linux-gnu/4.4.3/cc1 -quiet -v main.c -D_FORTIFY_SOURCE=2 -quiet -dumpbase main.c -mtune=generic -march=i486 -auxbase main -version -fstack-protector -o /tmp/ccYbVLkd.s
+GNU C (Ubuntu 4.4.3-4ubuntu5) version 4.4.3 (i486-linux-gnu)
+        compiled by GNU C version 4.4.3, GMP version 4.3.2, MPFR version 2.4.2-p1.
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/usr/local/include/i486-linux-gnu"
+ignoring nonexistent directory "/usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../i486-linux-gnu/include"
+ignoring nonexistent directory "/usr/include/i486-linux-gnu"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/local/include
+ /usr/lib/gcc/i486-linux-gnu/4.4.3/include
+ /usr/lib/gcc/i486-linux-gnu/4.4.3/include-fixed
+ /usr/include
+End of search list.
+GNU C (Ubuntu 4.4.3-4ubuntu5) version 4.4.3 (i486-linux-gnu)
+        compiled by GNU C version 4.4.3, GMP version 4.3.2, MPFR version 2.4.2-p1.
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: 5998ce5f1765e99eea5269f4c1e38d44
+COLLECT_GCC_OPTIONS='-o' 'main' '-v' '-mtune=generic' '-march=i486'
+ as -V -Qy -o /tmp/ccIaCwo7.o /tmp/ccYbVLkd.s
+GNU assembler version 2.20.1 (i486-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.20.1-system.20100303
+COMPILER_PATH=/usr/lib/gcc/i486-linux-gnu/4.4.3/:/usr/lib/gcc/i486-linux-gnu/4.4.3/:/usr/lib/gcc/i486-linux-gnu/:/usr/lib/gcc/i486-linux-gnu/4.4.3/:/usr/lib/gcc/i486-linux-gnu/:/usr/lib/gcc/i486-linux-gnu/4.4.3/:/usr/lib/gcc/i486-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/i486-linux-gnu/4.4.3/:/usr/lib/gcc/i486-linux-gnu/4.4.3/:/usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/i486-linux-gnu/4.4.3/../../../:/lib/:/usr/lib/:/usr/lib/i486-linux-gnu/
+COLLECT_GCC_OPTIONS='-o' 'main' '-v' '-mtune=generic' '-march=i486'
+ /usr/lib/gcc/i486-linux-gnu/4.4.3/collect2 --build-id --eh-frame-hdr -m elf_i386 --hash-style=both -dynamic-linker /lib/ld-linux.so.2 -o main -z relro /usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib/crt1.o /usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib/crti.o /usr/lib/gcc/i486-linux-gnu/4.4.3/crtbegin.o -L/usr/lib/gcc/i486-linux-gnu/4.4.3 -L/usr/lib/gcc/i486-linux-gnu/4.4.3 -L/usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/i486-linux-gnu/4.4.3/../../.. -L/usr/lib/i486-linux-gnu /tmp/ccIaCwo7.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/lib/gcc/i486-linux-gnu/4.4.3/crtend.o /usr/lib/gcc/i486-linux-gnu/4.4.3/../../../../lib/crtn.o
 ```
 
-gcc调动C编译器、汇编器和链接器完成C代码的编译链接工作：
+gcc只是一个外壳而不是真正的编译器，真正的C编译器是/usr/lib/gcc/i486-linuxgnu/4.4.3/cc1，gcc调动C编译器、汇编器和链接器完成C代码的编译链接工作：
 
 1.  main.c 被 /usr/lib/gcc/i486-linuxgnu/4.4.3/cc1 编译成汇编程序 /tmp/xxx.s。
 2.  /tmp/xxx.s 被 as 汇编成目标文件 /tmp/xxx.o。
 3.  /tmp/xxx.o 和其他几个目标文件 crt1.o、crti.o、crtbegin.o、crtend.o、crtn.o 被 /usr/lib/gcc/i486-linux-gnu/4.4.3/collect2（链接器ld的外壳，它调动ld完成链接）链接成可执行文件 main。在链接过程中还用-l选项指定了一些库文件，有libc、libgcc、libgcc_s，其中有些库是共享库，需要动态链接，所以用-dynamic-linker选项指定动态链接器是/lib/ld-linux.so.2。
 
-### 动态链接器
+#### cc1、as、collect2 和 gcc 参数的关系
 
-- -dynamic-linker /path/to/dynamic_linker
+gcc -E main.c 或 cpp main.c 调动 cc1；
 
-  用-dynamic-linker选项指定动态链接器
+gcc -S main.c 调动 cc1；
+
+gcc -c main.c 调动 cc1 和 as；
+
+gcc main.c 调动 cc1、as、collect2。
+
+gcc -c main.s 调动 as；
+
+gcc main.s 调动 as 和 collect2。
+
+gcc main.o 调动 collect2。
+
+### -g 选项
+
+生成可执行文件时，-g 选项的作用是在可执行文件中加入源代码的信息，比如可执行文件中第几条机器指令对应源代码的第几行，但并不是把整个源文件嵌入到可执行文件中。
+
+使用 gcc 生成可执行文件时加上 -g，gdb 才能调试生成的可执行文件。
+
+使用 gcc 生成可重定位的目标文件和可执行文件时加上 -g，可以用 objdump -dS 将指令和源代码穿插显示。
+
+在编译每个目标文件时加-g选项，而不能只在最后链接时加-g选项，如果目标文件中没有调试信息，链接生成的可执行文件也不会有。
+
+### -Wl
+
+``` console
+gcc main.c -g -L. -lstack -o main -Wl,-rpath,/home/juhan/19/19.4
+```
+
+注意选项 -Wl,-rpath,/home/akaedu/testdir，-Wl表示gcc传给链接器的选项，在这个例子中传给链接器的选项是-rpath /home/akaedu/testdir。
 
 ### 从 C 代码到进程的整个过程
 
 见[这里](from-c-to-process.md)。
-
-## Bash
-
-`$?`
-
-可以用 $? 查看可执行文件返回的值。
 
 ## 转义序列
 
@@ -715,7 +1040,7 @@ gcc调动C编译器、汇编器和链接器完成C代码的编译链接工作：
 
 - C 标准规定的转义字符
 
-  ![转义字符](part-1/images/转义字符.png)
+  <img alt="转义字符" src="part-1/images/转义字符.png" width=300>
 
 - ASCII 码转义序列
 
