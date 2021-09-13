@@ -40,6 +40,7 @@
 - [ABI](part-2/chapter-18.md#ABI)
 - [进程地址空间](part-2/chapter-19.md#进程地址空间)
 - [虚拟内存的作用](part-2/chapter-19.md#虚拟内存管理机制的作用)
+- [Don't Repeat Yourself 原则](part-2/chapter-21.md#重复信息应该自动维护)
 
 ## 标识符
 
@@ -226,7 +227,7 @@
 
       再看 file scope declaration，用 none 和 static 修饰声明时，声明可以初始化也可以不初始化，声明都会给变量分配空间，声明都是定义。如果不初始化，这种定义叫做 tentative definition。编译器认为这个变量是在该编译单元中定义的，但初始值待定，然后继续编译下面的代码，到整个编译单元编译结束时如果没有遇到这个变量的带初始化的定义，就用0来初始化它，不初始化的变量存在 .bss 段中。
 
-      用 extern 修饰声明时，声明根据 C99 可以初始化，声明会给变量分配空间，这个声明也就是一个定义，gcc 会报警告对这种情况会报警告，但可以正常执行。如果不初始化，那么这个声明就只是声明，不给变量分配空间。
+      用 extern 修饰声明时，声明根据 C99 可以初始化，声明会给变量分配空间，这个声明也就是一个定义，gcc 对这种情况会报警告，但可以正常执行。如果不初始化，那么这个声明就只是声明，不给变量分配空间。
 
     - gcc 和 C99 的差异
 
@@ -1155,7 +1156,7 @@ gcc main.o 调动 collect2。
 
 在编译每个目标文件时加-g选项，而不能只在最后链接时加-g选项，如果目标文件中没有调试信息，链接生成的可执行文件也不会有。
 
-### -Wl
+### -Wl 选项
 
 ``` console
 gcc main.c -g -L. -lstack -o main -Wl,-rpath,/home/juhan/19/19.4
@@ -1166,6 +1167,35 @@ gcc main.c -g -L. -lstack -o main -Wl,-rpath,/home/juhan/19/19.4
 ### 从 C 代码到进程的整个过程
 
 见[这里](from-c-to-process.md)。
+
+### -M 选项和 -MM 选项
+
+gcc的-M选项可以自动分析目标文件和源文件的依赖关系，以Makefile规则的格式输出：
+
+``` console
+$ gcc -M main.c
+main.o: main.c /usr/include/stdio.h /usr/include/features.h \
+  /usr/include/bits/predefs.h /usr/include/sys/cdefs.h \
+  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+  /usr/include/gnu/stubs-32.h \
+  /usr/lib/gcc/i486-linux-gnu/4.4.3/include/stddef.h \
+  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
+  /usr/lib/gcc/i486-linux-gnu/4.4.3/include/stdarg.h \
+  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h main.h \
+  stack.h maze.h
+```
+
+gcc -M的输出结果不仅包括我们自己写的头文件main.h、stack.h和maze.h，还包括stdio.h和其他系统头文件，因为我们的程序中包含了stdio.h，而后者又包含了其他系统头文件。
+
+系统头文件通常不需要随我们的程序一起维护，所以通常不用gcc的-M选项而是用-MM选项，输出结果中只包括我们自己写的头文件：
+
+``` console
+$ gcc -MM *.c
+main.o: main.c main.h stack.h maze.h
+maze.o: maze.c maze.h main.h
+stack.o: stack.c stack.h main.h
+```
 
 ## 转义序列
 
