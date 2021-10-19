@@ -41,6 +41,7 @@
 - [进程地址空间](part-2/chapter-19.md#进程地址空间)
 - [虚拟内存的作用](part-2/chapter-19.md#虚拟内存管理机制的作用)
 - [Don't Repeat Yourself 原则](part-2/chapter-21.md#重复信息应该自动维护)
+- [Sentinel](part-2/chapter-22.md#argc-和-char-*argv[])
 
 ## 标识符
 
@@ -559,63 +560,91 @@
 
 - 类型种类
 
-  - 标量（Scalar）类型
+  ![C语言类型总结](part-2/images/C语言类型总结.png)
 
-    可以表示零和非零，可以参与逻辑与、或、非运算或者做控制表达式的类型称为标量类型（Scalar Type）。
+  - Object Types
 
-    - 算术（Arithmetic）类型
+    - Scalar Types
 
-      可以做算术运算的类型称为算术类型（Arithmetic Type）。
+      可以表示零和非零，可以参与逻辑与、或、非运算或者做控制表达式的类型称为标量类型（Scalar Type）。
 
-      - 整数（Integer）类型
+      - Arithmetic Types
 
-        整数类型的符号在下面讨论。
+        可以做算术运算的类型称为算术类型（Arithmetic Type）。
 
-        - 布尔类型
+        - Integer Types
 
-          如果一个表达式要产生一个代表真假的值，那就两种情况，1 代表真，0 代表假。
+          整数类型的符号在下面讨论。
 
-          如果某条语句要检查一个表达式是真是假，非 0 代表真，0 代表假。
+          - 布尔类型
 
-        - `char`，`signed char`，`unsigned char`，字符（Character）类型
+            如果一个表达式要产生一个代表真假的值，那就两种情况，1 代表真，0 代表假。
 
-        - `short int`/`short`/`signed short int`/`signed short`，`unsigned short int`/`unsigned short`
+            如果某条语句要检查一个表达式是真是假，非 0 代表真，0 代表假。
 
-        - `int`/`signed int`/`signed`，`unsigned int`/`unsigned`，整数（Integer）类型
+          - `char`，`signed char`，`unsigned char`，字符（Character）类型
 
-        - `long int`/`long`/`signed long int`/`signed long`，`unsigned long int`/`unsigned long`
+          - `short int`/`short`/`signed short int`/`signed short`，`unsigned short int`/`unsigned short`
 
-        - `long long int`/`long long`/`signed long long int`/`signed long long`，`unsigned long long int`/`unsigned long long`
+          - `int`/`signed int`/`signed`，`unsigned int`/`unsigned`，整数（Integer）类型
 
-        - `enum tag` 枚举（Enumeration）类型
+          - `long int`/`long`/`signed long int`/`signed long`，`unsigned long int`/`unsigned long`
 
-        - bit-field
+          - `long long int`/`long long`/`signed long long int`/`signed long long`，`unsigned long long int`/`unsigned long long`
 
-          bit-field 用 `int`/`signed int`/`signed` 或 `unsigned int`/`unsigned` 声明。可以有名字也可以没名字，名字冒号后面的数字表示变量的位数。
+          - `enum tag` 枚举（Enumeration）类型
 
-          `unsigned int name:1;`
+          - bit-field
 
-          `int :2;`
+            bit-field 用 `int`/`signed int`/`signed` 或 `unsigned int`/`unsigned` 声明。可以有名字也可以没名字，名字冒号后面的数字表示变量的位数。
 
-      - 浮点数（Floating Point）类型
+            `unsigned int name:1;`
 
-        - 单精度浮点数类型
+            `int :2;`
 
-          `float`
+        - Floating Types
 
-        - 双精度浮点数类型
+          - 单精度浮点数类型
 
-          `double`
+            `float`
 
-        - 精度更高的浮点数类型
+          - 双精度浮点数类型
 
-          `long double`
+            `double`
 
-    - 指针类型
+          - 精度更高的浮点数类型
 
-  - 函数类型（Function Type）
+            `long double`
 
-  - void 类型
+      - Pointer Types
+
+        指针类型在下面讨论。
+
+        - Pointer to function types
+        - Pointer to object types
+        - Pointer to incomplete types
+
+    - Nonscalar Types
+
+      - Struct Types
+      - Union Types
+      - Array Types
+
+  - Function Types
+
+  - Incomplete Types
+
+    - void
+
+      void 类型只能作为函数返回值的类型，表示函数没有返回值。
+
+      void 类型的变量不能声明和定义。
+
+    - Incomplete struct types
+
+    - Incomplete union types
+
+    - Incomplete array types
 
 - unsigned and signed
 
@@ -634,6 +663,10 @@
   - 除了 char 以外的类型
 
     除了 char 型以外的这些类型如果不明确写 signed 或 unsigned 关键字都表示 signed，这一点是 C 标准明确规定的，不是 Implementation Defined。
+
+- 指针类型
+
+
 
 ---
 
@@ -892,6 +925,14 @@
 
     操作数的类型必须是标量类型，转换之后的类型必须是标量类型或者void型。
 
+  - 取地址运算符和指针间接寻址运算符的操作数类型和结果类型
+
+    取地址运算符 & 的操作数必须是左值，因为只有左值才表示一个内存单元，才会有地址，运算结果是指针类型。
+
+    指针间接寻址运算符 * 的操作数必须是指针类型，运算结果可以做左值。
+
+    所以，如果表达式E可以做左值，`*&E`和E等价，如果表达式E是指针类型，`&*E`和E等价。
+
   - 位运算符的操作数类型
 
     四个位运算符的操作数必须是整型。
@@ -950,7 +991,7 @@
 
   - 赋值运算符左边的操作数（左值）
 
-    只有变量、数组取下标表达式可以做左值。
+    能表示存储位置的表达式才能做左值，包括变量（数组变量）、数组取下标表达式。
 
     函数调用表达式不能做左值。
 
