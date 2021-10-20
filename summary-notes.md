@@ -42,6 +42,8 @@
 - [虚拟内存的作用](part-2/chapter-19.md#虚拟内存管理机制的作用)
 - [Don't Repeat Yourself 原则](part-2/chapter-21.md#重复信息应该自动维护)
 - [Sentinel](part-2/chapter-22.md#argc-和-char-*argv[])
+- [低耦合，高内聚](part-2/chapter-22.md#函数指针的用处)
+- [High-Order Function](part-2/chapter-23.md#23.5-回调函数)
 
 ## 标识符
 
