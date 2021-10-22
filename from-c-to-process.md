@@ -972,7 +972,7 @@ $ readelf -a max
 
   The Linux kernel loads a.out into memory. It then examines PT_INTERP segment (if any).
 
-  If that segment is not present, the binary is statically linked and the kernel transfers control to the Elf{32,64}Ehdr.e_entry (usually the _start routine).
+  If that segment is not present, the binary is statically linked and the kernel transfers control to the `Elf{32,64}Ehdr.e_entry` (usually the `_start` routine).
 
   If the PT_INTERP segment is present, the kernel loads it into memory, and transfers control to it's .e_entry. It is here that the dynamic linking begins.
 
@@ -1116,7 +1116,7 @@ CPU 执行单元发出虚拟地址后，先在 cache 中进行查找：
 
 - exit 库函数
 
-  exit 是 libc 的库函数，它首先做一些清理工作，然后调用下面要说的 _exit(2) 终止进程，main 函数的返回值最终被传给 _exit(2) 系统调用函数，成为进程的退出状态。
+  exit 是 libc 的库函数，它首先做一些清理工作，然后调用下面要说的 `_exit(2)` 终止进程，main 函数的返回值最终被传给 `_exit(2)` 系统调用函数，成为进程的退出状态。
 
 - main 函数中可以直接调用 exit 函数
 
@@ -1136,7 +1136,7 @@ CPU 执行单元发出虚拟地址后，先在 cache 中进行查找：
 
 - main 函数也可以用 _exit 函数退出
 
-  在 C 程序中也可以调用 _exit 函数退出（需要包含头文件 unistd.h），它是 _exit 系统调用的简单包装。
+  在 C 程序中也可以调用 `_exit` 函数退出（需要包含头文件 unistd.h），它是 `_exit` 系统调用的简单包装。
 
   它可能是一个 C 函数，其中内嵌了movl $1,%eax、movl ?, %ebx和int $0x80三条指令（稍后在第18.5节介绍这种语法）。
 
