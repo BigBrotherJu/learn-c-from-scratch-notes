@@ -1,5 +1,7 @@
 # 23. 函数接口
 
+<!-- no highlight -->
+
 - 函数接口
 - 文档（Man Page）
 

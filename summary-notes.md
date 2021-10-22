@@ -44,6 +44,10 @@
 - [Sentinel](part-2/chapter-22.md#argc-和-char-*argv[])
 - [低耦合，高内聚](part-2/chapter-22.md#函数指针的用处)
 - [High-Order Function](part-2/chapter-23.md#23.5-回调函数)
+- [句柄](part-2/chapter-24.md#fopen/fclose)
+- [封装](part-2/chapter-24.md#fopen/fclose)
+- [EOF](part-2/chapter-24.md#fopen/fclose))
+- [Stream](part-2/chapter-24.md#以字符串为单位的-I/O-函数)
 
 ## 标识符
 
@@ -667,8 +671,6 @@
     除了 char 型以外的这些类型如果不明确写 signed 或 unsigned 关键字都表示 signed，这一点是 C 标准明确规定的，不是 Implementation Defined。
 
 - 指针类型
-
-
 
 ---
 

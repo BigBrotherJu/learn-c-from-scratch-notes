@@ -174,7 +174,7 @@ PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x08048000));语句�
 
 再看. = SEGMENT_START("text-segment", 0x08048000) + SIZEOF_HEADERS;这一句。“.”表示当前链接地址，即程序加载运行时的虚拟地址，链接器每组装一个段就把当前链接地址自动加上这个段的长度，因此各段在加载时一般是紧挨着的，中间没有空隙，只有一种情况例外：如果在链接脚本中给“.”赋值，那么链接器组装下一个段就从赋值的新地址开始，而不是和前一个段紧挨着了。所以这条语句表示把当前链接地址改成Text Segment的起始地址加上SIZEOF_HEADERS偏移量，后面的段从这里开始组装，后面的段依次是.interp段、.note.gnu.build-id段等（其中包括我们熟悉的.plt段、.text段和.rodata段），这些段都被组装到Text Segment中。
 
-每个段的描述格式都是“段名 : { 组成 }”，例如.plt : { *(.plt) *(.iplt) }，左边表示链接生成的文件的.plt段，右边表示所有目标文件的.plt段和.iplt段，意思是链接生成的文件的.plt段由各目标文件的.plt段和.iplt段组成。
+每个段的描述格式都是“段名 : { 组成 }”，例如`.plt : { *(.plt) *(.iplt) }`，左边表示链接生成的文件的.plt段，右边表示所有目标文件的.plt段和.iplt段，意思是链接生成的文件的.plt段由各目标文件的.plt段和.iplt段组成。
 
 组装完Text Segment之后又给当前链接地址赋了新值，从新的虚拟地址开始组装Data Segment：
 
