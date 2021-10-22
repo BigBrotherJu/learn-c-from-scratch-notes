@@ -293,7 +293,7 @@ loop_exit:
 
   ELF格式提供了两种不同的视角，链接器把ELF文件看成是Section的集合，而加载器把ELF文件看成是Segment的集合，如图17.1所示。
 
-  ![ELF文件](images/ELF文件.png)
+  ![elf文件](images/elf文件.png)
 
   - 链接器的视角
 
